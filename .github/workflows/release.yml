@@ -51,6 +51,17 @@ jobs:
           --full-stacktrace \
           -Plodestone_version=${{ steps.release.outputs.version }}
 
+    - name: Publish to Maven repository
+      if: ${{ steps.release.outputs.release_created == 'true' }}
+      env:
+        REPOSILITE_URL: ${{ secrets.REPOSILITE_URL }}
+        REPOSILITE_USERNAME: ${{ secrets.REPOSILITE_USERNAME }}
+        REPOSILITE_PASSWORD: ${{ secrets.REPOSILITE_PASSWORD }}
+      run: |
+        ./gradlew publish \
+          --full-stacktrace \
+          -Plodestone_version=${{ steps.release.outputs.version }}
+
     - name: Upload release artifacts
       if: ${{ steps.release.outputs.release_created == 'true' }}
       env:
