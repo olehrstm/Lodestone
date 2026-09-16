@@ -49,15 +49,15 @@ publishing {
     }
 
     repositories {
-        val reposiliteUrl = System.getenv("REPOSILITE_URL")
+        val reposiliteUrl = providers.environmentVariable("REPOSILITE_URL").orNull
         if (!reposiliteUrl.isNullOrBlank()) {
             maven {
                 name = "reposilite"
                 url = uri(reposiliteUrl)
 
                 credentials {
-                    username = System.getenv("REPOSILITE_USERNAME")
-                    password = System.getenv("REPOSILITE_PASSWORD")
+                    username = providers.environmentVariable("REPOSILITE_USERNAME").orNull
+                    password = providers.environmentVariable("REPOSILITE_PASSWORD").orNull
                 }
 
                 authentication {

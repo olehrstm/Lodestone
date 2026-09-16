@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    branches: [ "main" ]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  release:
+    name: 🎉 Release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v7
+
+    - name: Setup JDK
+      uses: actions/setup-java@v6
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Make gradle wrapper executable
+      run: chmod +x ./gradlew
+
+    # Do not let Release Please create a release from a broken main branch.
+    - name: Verify build
+      run: ./gradlew build --full-stacktrace
+
+    - name: Release Please
+      id: release
+      uses: googleapis/release-please-action@v5
+      with:
+        token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        config-file: release-please-config.json
+        manifest-file: .release-please-manifest.json
+
+    - name: Build release
+      if: ${{ steps.release.outputs.release_created == 'true' }}
+      run: |
+        ./gradlew clean build \
+          --full-stacktrace \
+          -Plodestone_version=${{ steps.release.outputs.version }}
+
+    - name: Publish to Maven repository
+      if: ${{ steps.release.outputs.release_created == 'true' }}
+      env:
+        REPOSILITE_URL: ${{ secrets.REPOSILITE_URL }}
+        REPOSILITE_USERNAME: ${{ secrets.REPOSILITE_USERNAME }}
+        REPOSILITE_PASSWORD: ${{ secrets.REPOSILITE_PASSWORD }}
+      run: |
+        ./gradlew publish \
+          --full-stacktrace \
+          -Plodestone_version=${{ steps.release.outputs.version }}
+
+    - name: Upload release artifacts
+      if: ${{ steps.release.outputs.release_created == 'true' }}
+      env:
+        GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+      run: |
+        gh release upload \
+          "${{ steps.release.outputs.tag_name }}" \
+          build/libs/*.jar \
+          --clobber
