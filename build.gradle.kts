@@ -12,7 +12,7 @@ repositories {
 }
 
 dependencies {
-    implementation(libs.minestom)
+    api(libs.minestom)
 }
 
 tasks {
