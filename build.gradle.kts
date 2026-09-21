@@ -5,7 +5,13 @@ plugins {
 }
 
 group = "de.ole101.lodestone"
-version = providers.gradleProperty("lodestone_version").get()
+version = providers.gradleProperty("lodestone_version")
+    .orElse(
+        providers.fileContents(layout.projectDirectory.file("version.txt"))
+            .asText
+            .map { "${it.trim()}-development" }
+    )
+    .get()
 
 repositories {
     mavenCentral()
