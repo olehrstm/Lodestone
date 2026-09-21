@@ -9,32 +9,25 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
-  pull-requests: write
-  issues: write
+  contents: read
 
 jobs:
+  # Do not let Release Please create a release from a broken main branch.
+  verify:
+    name: ✅ Verify
+    uses: ./.github/workflows/ci.yml
+
   release:
     name: 🎉 Release
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: verify
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
-
-      - name: Setup JDK
-        uses: actions/setup-java@v6
         with:
-          java-version: '25'
-          distribution: 'temurin'
-          cache: gradle
-
-      - name: Make gradle wrapper executable
-        run: chmod +x ./gradlew
-
-      # Do not let Release Please create a release from a broken main branch.
-      - name: Verify build
-        run: ./gradlew build --full-stacktrace
+          persist-credentials: false
 
       - name: Release Please
         id: release
@@ -44,10 +37,21 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
+      - name: Setup JDK
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        uses: actions/setup-java@v6
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        uses: gradle/actions/setup-gradle@v6
+
       - name: Build release
         if: ${{ steps.release.outputs.release_created == 'true' }}
         run: |
-          ./gradlew clean build \
+          ./gradlew build \
             --full-stacktrace \
             -Plodestone_version=${{ steps.release.outputs.version }}
 
