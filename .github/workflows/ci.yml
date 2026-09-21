@@ -1,13 +1,12 @@
 name: CI
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_call:
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
 permissions:
@@ -20,26 +19,39 @@ jobs:
     timeout-minutes: 15
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v7
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-    - name: Setup JDK
-      uses: actions/setup-java@v6
-      with:
-        java-version: '25'
-        distribution: 'temurin'
-        cache: gradle
+      - name: Setup JDK
+        uses: actions/setup-java@v6
+        with:
+          java-version: '25'
+          distribution: 'temurin'
 
-    - name: Make gradle wrapper executable
-      run: chmod +x ./gradlew
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
 
-    - name: Build with Gradle
-      run: ./gradlew build --full-stacktrace
+      - name: Build with Gradle
+        run: ./gradlew build --full-stacktrace
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v7
-      with:
-        name: lodestone-${{ github.sha }}
-        path: build/libs/
-        if-no-files-found: 'error'
-        retention-days: 14
+      - name: Upload test reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports-${{ github.sha }}
+          path: |
+            build/reports/tests/
+            build/test-results/
+          if-no-files-found: 'ignore'
+          retention-days: 7
+
+      - name: Upload artifacts
+        if: ${{ github.event_name == 'push' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: lodestone-${{ github.sha }}
+          path: build/libs/
+          if-no-files-found: 'error'
+          retention-days: 14
