@@ -7,7 +7,7 @@ public object MiniMessageProvider {
 
     @Volatile
     public var instance: MiniMessage = MiniMessage.builder()
-        .editTags { it.resolver(ColorTag()) }
+        .editTags { it.resolvers(ColorTag(), SmallCapsTag.RESOLVER) }
         .build()
 
     public fun parse(message: String): Component {
