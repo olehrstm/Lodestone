@@ -14,6 +14,10 @@ repositories {
 dependencies {
     api(libs.minestom)
     api(libs.adventure.text.minimessage)
+
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.kotest.property)
 }
 
 tasks {
@@ -24,6 +28,10 @@ tasks {
         from("LICENSE") {
             rename { "${it}_$projectName" }
         }
+    }
+
+    test {
+        useJUnitPlatform()
     }
 }
 
