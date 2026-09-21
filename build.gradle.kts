@@ -13,6 +13,7 @@ repositories {
 
 dependencies {
     api(libs.minestom)
+    api(libs.adventure.text.minimessage)
 }
 
 tasks {

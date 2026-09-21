@@ -2,9 +2,11 @@
 kotlin-jvm = "2.4.20"
 
 minestom = "2026.09.12-26.2"
+adventure-text-minimessage = "5.2.0"
 
 [libraries]
 minestom = { module = "net.minestom:minestom", version.ref = "minestom" }
+adventure-text-minimessage = { module = "net.kyori:adventure-text-minimessage", version.ref = "adventure-text-minimessage" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin-jvm" }
