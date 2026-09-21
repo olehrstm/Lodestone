@@ -1,4 +1,4 @@
-package de.ole101.lodestone
+package de.ole101.lodestone.command
 
 import net.minestom.server.MinecraftServer
 import net.minestom.server.command.CommandSender

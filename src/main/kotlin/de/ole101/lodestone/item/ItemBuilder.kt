@@ -1,4 +1,4 @@
-package de.ole101.lodestone
+package de.ole101.lodestone.item
 
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextDecoration
