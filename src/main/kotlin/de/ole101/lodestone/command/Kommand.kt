@@ -1,6 +1,6 @@
 package de.ole101.lodestone.command
 
-import net.minestom.server.MinecraftServer
+import de.ole101.lodestone.commandManager
 import net.minestom.server.command.CommandSender
 import net.minestom.server.command.builder.Command
 import net.minestom.server.command.builder.CommandContext
@@ -68,7 +68,7 @@ public abstract class Kommand(name: String, vararg aliases: String) : Command(na
     }
 
     public fun register() {
-        MinecraftServer.getCommandManager().register(this)
+        commandManager.register(this)
     }
 
     @PublishedApi

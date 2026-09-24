@@ -23,7 +23,7 @@ class MiniMessageProviderTest : FunSpec({
 
         test("parses the custom colour tag") {
             MiniMessageProvider.parse("<!cornflowerblue>hello").colors() shouldContainExactly
-                listOf(Colors.CORNFLOWER_BLUE)
+                    listOf(Colors.CORNFLOWER_BLUE)
         }
 
         test("parses the small caps tag") {
