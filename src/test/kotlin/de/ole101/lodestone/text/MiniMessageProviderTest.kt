@@ -6,14 +6,12 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import net.kyori.adventure.text.format.NamedTextColor
-import net.kyori.adventure.text.minimessage.MiniMessage
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 
 class MiniMessageProviderTest : FunSpec({
 
-    val default = MiniMessageProvider.instance
-
-    afterEach { MiniMessageProvider.instance = default }
+    afterEach { MiniMessageProvider.configure(TagResolver.empty()) }
 
     context("the default instance") {
         test("parses built-in tags") {
@@ -40,12 +38,19 @@ class MiniMessageProviderTest : FunSpec({
         }
     }
 
-    context("a replaced instance") {
-        test("is used for subsequent parsing") {
-            MiniMessageProvider.instance = MiniMessage.builder().tags(TagResolver.empty()).build()
+    context("a configured instance") {
+        test("parses the extra tags") {
+            MiniMessageProvider.configure(Placeholder.unparsed("name", "Steve"))
 
-            MiniMessageProvider.parse("<red>hello").plain() shouldBe "<red>hello"
+            MiniMessageProvider.parse("hi <name>").plain() shouldBe "hi Steve"
         }
 
+        test("keeps the built-in and lodestone tags") {
+            MiniMessageProvider.configure(Placeholder.unparsed("name", "Steve"))
+
+            MiniMessageProvider.parse("<red>hello").colors() shouldContainExactly listOf(NamedTextColor.RED)
+            MiniMessageProvider.parse("<!gold>hello").colors() shouldContainExactly listOf(Colors.GOLD)
+            MiniMessageProvider.parse("<small>hello</small>").plain() shouldBe "ʜᴇʟʟᴏ"
+        }
     }
 })

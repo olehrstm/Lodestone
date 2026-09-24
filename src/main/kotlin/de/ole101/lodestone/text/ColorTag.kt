@@ -6,7 +6,7 @@ import net.kyori.adventure.text.minimessage.tag.Tag
 import net.kyori.adventure.text.minimessage.tag.resolver.ArgumentQueue
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 
-public class ColorTag : TagResolver {
+internal class ColorTag : TagResolver {
 
     override fun resolve(
         name: String,

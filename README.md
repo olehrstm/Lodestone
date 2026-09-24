@@ -26,6 +26,3 @@ lodestone = "<version>"
 [libraries]
 lodestone = { module = "de.ole101.lodestone:lodestone", version.ref = "lodestone" }
 ```
-
-Minestom and MiniMessage come along as transitive `api` dependencies; declare them yourself only if
-you want to pin a specific version.
