@@ -3,6 +3,7 @@
 An extensive open-source Kotlin library for [Minestom](https://minestom.net) 26.2.
 
 ## Installation
+![GitHub Release](https://img.shields.io/github/v/release/olehrstm/Lodestone)
 
 `build.gradle.kts`:
 
