@@ -5,7 +5,7 @@ import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.minimessage.tag.Modifying
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 
-public class SmallCapsTag : Modifying {
+internal class SmallCapsTag : Modifying {
 
     override fun apply(current: Component, depth: Int): Component {
         if (current !is TextComponent) return current.children(emptyList())

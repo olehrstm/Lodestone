@@ -15,7 +15,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 class SmallCapsTagTest : FunSpec({
 
     val miniMessage = MiniMessage.builder()
-        .editTags { it.resolvers(ColorTag(), SmallCapsTag.RESOLVER) }
+        .editTags { it.resolver(LodestoneTags) }
         .build()
 
     fun smallCaps(input: String): String = miniMessage.deserialize("<small>$input</small>").plain()
