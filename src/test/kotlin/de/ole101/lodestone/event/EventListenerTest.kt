@@ -1,5 +1,6 @@
 package de.ole101.lodestone.event
 
+import de.ole101.lodestone.globalEventHandler
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -13,7 +14,6 @@ private class PongEvent : Event
 class EventListenerTest : FunSpec({
 
     MinecraftServer.init()
-    val global = MinecraftServer.getGlobalEventHandler()
 
     test("listen only receives events of the reified type") {
         val node = EventNode.all("typed")
@@ -32,9 +32,9 @@ class EventListenerTest : FunSpec({
         val node = listen<PingEvent>("named") { received += it }
 
         val first = PingEvent()
-        global.call(first)
-        global.removeChild(node)
-        global.call(PingEvent())
+        globalEventHandler.call(first)
+        globalEventHandler.removeChild(node)
+        globalEventHandler.call(PingEvent())
 
         received shouldContainExactly listOf(first)
     }
@@ -47,13 +47,13 @@ class EventListenerTest : FunSpec({
             }
         }
 
-        global.call(PingEvent())
+        globalEventHandler.call(PingEvent())
         received.shouldBeEmpty()
 
         listener.register()
         val event = PingEvent()
-        global.call(event)
-        global.removeChild(listener.node)
+        globalEventHandler.call(event)
+        globalEventHandler.removeChild(listener.node)
 
         received shouldContainExactly listOf(event)
     }

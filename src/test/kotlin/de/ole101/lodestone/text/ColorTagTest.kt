@@ -77,7 +77,7 @@ class ColorTagTest : FunSpec({
 
         test("resolves a name the built-in palette does not have") {
             miniMessage.deserialize("<!rebeccapurple>hello").colors() shouldContainExactly
-                listOf(Colors.REBECCA_PURPLE)
+                    listOf(Colors.REBECCA_PURPLE)
         }
 
         test("keeps an unknown bang tag as literal text") {
@@ -90,7 +90,7 @@ class ColorTagTest : FunSpec({
         test("resolves every registered colour name") {
             checkAll(Arb.of(Colors.names.toList())) { name ->
                 miniMessage.deserialize("<!$name>x").colors() shouldContainExactly
-                    listOf(Colors.byName.getValue(name))
+                        listOf(Colors.byName.getValue(name))
             }
         }
     }
