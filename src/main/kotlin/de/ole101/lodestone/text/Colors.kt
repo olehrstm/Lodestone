@@ -158,11 +158,11 @@ public object Colors {
     public val YELLOW: TextColor = register("yellow", 0xFFFF00)
     public val YELLOW_GREEN: TextColor = register("yellowgreen", 0x9ACD32)
 
-    @Deprecated("Use byName.values instead.", ReplaceWith("byName.values.toList()"), DeprecationLevel.ERROR)
+    @Deprecated("Use byName.values instead.", ReplaceWith("byName.values.toList()"), DeprecationLevel.WARNING)
     public val values: List<TextColor>
         get() = byName.values.toList()
 
-    @Deprecated("Use byName.keys instead.", ReplaceWith("byName.keys"), DeprecationLevel.ERROR)
+    @Deprecated("Use byName.keys instead.", ReplaceWith("byName.keys"), DeprecationLevel.WARNING)
     public val names: Set<String>
         get() = byName.keys
 
