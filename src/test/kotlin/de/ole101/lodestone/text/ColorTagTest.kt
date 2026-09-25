@@ -40,7 +40,7 @@ class ColorTagTest : FunSpec({
         }
 
         test("accepts every registered colour name") {
-            checkAll(Arb.of(Colors.names.toList())) { name ->
+            checkAll(Arb.of(Colors.byName.keys.toList())) { name ->
                 resolver.has("!$name").shouldBeTrue()
             }
         }
@@ -88,7 +88,7 @@ class ColorTagTest : FunSpec({
         }
 
         test("resolves every registered colour name") {
-            checkAll(Arb.of(Colors.names.toList())) { name ->
+            checkAll(Arb.of(Colors.byName.keys.toList())) { name ->
                 miniMessage.deserialize("<!$name>x").colors() shouldContainExactly
                         listOf(Colors.byName.getValue(name))
             }
