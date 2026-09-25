@@ -1,8 +1,6 @@
 package de.ole101.lodestone.text
 
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.collections.shouldContainExactly
-import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -14,7 +12,7 @@ import net.kyori.adventure.text.format.TextColor
 
 class ColorsTest : FunSpec({
 
-    val names = Arb.of(Colors.names.toList())
+    val names = Arb.of(Colors.byName.keys.toList())
 
     context("named") {
         test("resolves an exact lowercase name") {
@@ -67,15 +65,9 @@ class ColorsTest : FunSpec({
             Colors.REBECCA_PURPLE shouldBe TextColor.color(0x663399)
         }
 
-        test("exposes the same entries through byName, names and values") {
-            Colors.names shouldBe Colors.byName.keys
-            Colors.values shouldContainExactly Colors.byName.values.toList()
-            Colors.values shouldHaveSize Colors.byName.size
-        }
-
         test("keeps registration order") {
-            Colors.names.first() shouldBe "aliceblue"
-            Colors.names.last() shouldBe "yellowgreen"
+            Colors.byName.keys.first() shouldBe "aliceblue"
+            Colors.byName.keys.last() shouldBe "yellowgreen"
         }
 
         test("registers british spellings as aliases") {
@@ -88,7 +80,7 @@ class ColorsTest : FunSpec({
         }
 
         test("holds every name in lowercase letters only") {
-            Colors.names.forEach { name ->
+            Colors.byName.keys.forEach { name ->
                 name shouldBe name.lowercase().filter { it.isLetter() }
             }
         }

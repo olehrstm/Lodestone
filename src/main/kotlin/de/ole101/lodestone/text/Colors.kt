@@ -1,10 +1,13 @@
 package de.ole101.lodestone.text
 
 import net.kyori.adventure.text.format.TextColor
+import java.util.*
 
 public object Colors {
 
     private val colors: MutableMap<String, TextColor> = LinkedHashMap()
+
+    public val byName: Map<String, TextColor> = Collections.unmodifiableMap(colors)
 
     public val ALICE_BLUE: TextColor = register("aliceblue", 0xF0F8FF)
     public val ANTIQUE_WHITE: TextColor = register("antiquewhite", 0xFAEBD7)
@@ -155,11 +158,13 @@ public object Colors {
     public val YELLOW: TextColor = register("yellow", 0xFFFF00)
     public val YELLOW_GREEN: TextColor = register("yellowgreen", 0x9ACD32)
 
-    public val byName: Map<String, TextColor> = this.colors.toMap()
+    @Deprecated("Use byName.values instead.", ReplaceWith("byName.values.toList()"), DeprecationLevel.WARNING)
+    public val values: List<TextColor>
+        get() = byName.values.toList()
 
-    public val values: List<TextColor> = this.colors.values.toList()
-
-    public val names: Set<String> = this.colors.keys.toSet()
+    @Deprecated("Use byName.keys instead.", ReplaceWith("byName.keys"), DeprecationLevel.WARNING)
+    public val names: Set<String>
+        get() = byName.keys
 
     public fun named(name: String): TextColor? {
         return this.colors[name.filter { it.isLetter() }.lowercase()]
