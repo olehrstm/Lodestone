@@ -46,12 +46,3 @@ jobs:
             build/test-results/
           if-no-files-found: 'ignore'
           retention-days: 7
-
-      - name: Upload artifacts
-        if: ${{ github.event_name == 'push' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: lodestone-${{ github.sha }}
-          path: build/libs/
-          if-no-files-found: 'error'
-          retention-days: 14
