@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.0](https://github.com/olehrstm/Lodestone/compare/v1.0.0...v1.1.0) (2026-09-25)
+
+
+### Features
+
+* add component width utility ([#23](https://github.com/olehrstm/Lodestone/issues/23)) ([bab7ede](https://github.com/olehrstm/Lodestone/commit/bab7ede398e2fa6dad8f0f19c3822be1ac1a1895))
+* add glyph utility ([#25](https://github.com/olehrstm/Lodestone/issues/25)) ([b00bb58](https://github.com/olehrstm/Lodestone/commit/b00bb589955d34181215688e8246f87ae3d7ff54))
+* add sign input dsl ([#27](https://github.com/olehrstm/Lodestone/issues/27)) ([789e071](https://github.com/olehrstm/Lodestone/commit/789e0716be5c71740d2ab6889ad78f915c60f01c))
+
 ## 1.0.0 (2026-09-25)
 
 
