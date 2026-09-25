@@ -12,10 +12,28 @@ import net.minestom.server.entity.Player
 @DslMarker
 public annotation class KommandDsl
 
+/**
+ * Minestom [Command] with a Kotlin DSL for executors, conditions, syntaxes and subcommands.
+ *
+ * Extend it, configure it in an `init` block, then call [register]. The command is reachable by
+ * [name] and every entry in [aliases].
+ *
+ * Executors and conditions are typed by sender. When the sender is not of the requested type,
+ * an executor does nothing and a condition fails.
+ *
+ * ```
+ * class HealKommand : Kommand("heal") {
+ *     init {
+ *         defaultExecutor { player -> player.health = 20f }
+ *     }
+ * }
+ * ```
+ */
 @KommandDsl
 public abstract class Kommand(name: String, vararg aliases: String) : Command(name, *aliases) {
 
     public class CommandScope(public val context: CommandContext) {
+        /** Returns the value parsed for this argument, or `null` when the input left it out, and it has no default value. */
         public operator fun <T> Argument<T>.invoke(): T = context.get(this)
     }
 
@@ -26,6 +44,12 @@ public abstract class Kommand(name: String, vararg aliases: String) : Command(na
     @JvmName("defaultExecutorPlayer")
     public fun defaultExecutor(block: CommandScope.(Player) -> Unit): Unit = defaultExecutor<Player>(block)
 
+    /**
+     * Sets the condition that decides whether a sender can use the whole command.
+     *
+     * The block gets the sender and the raw command string. The string is `null` when Minestom only
+     * checks whether to show the command in tab completion. Senders that are not an `S` always fail.
+     */
     public inline fun <reified S : CommandSender> condition(noinline block: (S, String?) -> Boolean) {
         condition = conditionFor(S::class.java, block)
     }

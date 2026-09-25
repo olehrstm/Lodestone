@@ -3,10 +3,21 @@ package de.ole101.lodestone.text
 import net.kyori.adventure.text.format.TextColor
 import java.util.*
 
+/**
+ * A list of all named CSS colors as Adventure [TextColor]s.
+ *
+ * Each constant uses the CSS name, for example [ALICE_BLUE] for `aliceblue`. MiniMessage exposes
+ * them as `<!name>` tags through [LodestoneTags].
+ */
 public object Colors {
 
     private val colors: MutableMap<String, TextColor> = LinkedHashMap()
 
+    /**
+     * All colors keyed by their lowercase CSS name without separators, such as `aliceblue`.
+     *
+     * Gray and grey spellings are separate keys with the same color.
+     */
     public val byName: Map<String, TextColor> = Collections.unmodifiableMap(colors)
 
     public val ALICE_BLUE: TextColor = register("aliceblue", 0xF0F8FF)
@@ -166,6 +177,12 @@ public object Colors {
     public val names: Set<String>
         get() = byName.keys
 
+    /**
+     * Returns the color called [name], or `null` when there is none.
+     *
+     * Matching ignores case and every character that is not a letter, so `Alice Blue`, `alice_blue`
+     * and `aliceblue` all return [ALICE_BLUE].
+     */
     public fun named(name: String): TextColor? {
         return this.colors[name.filter { it.isLetter() }.lowercase()]
     }
