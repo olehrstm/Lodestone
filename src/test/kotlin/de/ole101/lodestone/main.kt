@@ -1,6 +1,7 @@
 package de.ole101.lodestone
 
 import de.ole101.lodestone.event.listen
+import de.ole101.lodestone.sign.signInput
 import de.ole101.lodestone.text.mini
 import de.ole101.lodestone.text.send
 import de.ole101.lodestone.text.sendMini
@@ -33,6 +34,11 @@ fun main() {
         val message = "test123 <!red>".mini()
         message.send(player)
         "<small>Hello 123!</small>".sendMini(player)
+
+        val input = signInput {
+            onInput { player, input -> player.sendMessage(input) }
+        }
+        input.open(player)
     }
 
     server.start("0.0.0.0", 25565)
