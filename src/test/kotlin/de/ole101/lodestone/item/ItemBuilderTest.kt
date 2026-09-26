@@ -31,7 +31,7 @@ class ItemBuilderTest : FunSpec({
         }
 
         test("sets no components when the block is empty") {
-            item(Material.STONE) { }.componentPatch().isEmpty() shouldBe true
+            item(Material.STONE) { }.componentPatch().isEmpty shouldBe true
         }
     }
 

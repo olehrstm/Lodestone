@@ -20,6 +20,7 @@ repositories {
 dependencies {
     api(libs.minestom)
     api(libs.adventure.text.minimessage)
+    api(libs.kotlinx.coroutines.core)
 
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
