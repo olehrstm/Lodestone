@@ -1,5 +1,6 @@
 package de.ole101.lodestone.text
 
+import de.ole101.lodestone.text.glyph.space
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import net.kyori.adventure.text.Component
@@ -31,5 +32,18 @@ class ComponentWidthTest : FunSpec({
 
     test("measures an empty component as zero") {
         Component.empty().pixelWidth() shouldBe 0
+    }
+
+    test("measures a space as its pixel count") {
+        for (pixels in -8192..8192) space(pixels).pixelWidth() shouldBe pixels
+    }
+
+    test("adds spaces to the text width") {
+        Component.text("ab").append(space(-12)).pixelWidth() shouldBe 0
+    }
+
+    test("measures other translatable components as zero") {
+        Component.translatable("space.abc").pixelWidth() shouldBe 0
+        Component.translatable("item.minecraft.stone").pixelWidth() shouldBe 0
     }
 })
