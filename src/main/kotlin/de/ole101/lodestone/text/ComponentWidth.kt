@@ -1,7 +1,9 @@
 package de.ole101.lodestone.text
 
+import de.ole101.lodestone.text.glyph.SPACE_KEY_PREFIX
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
+import net.kyori.adventure.text.TranslatableComponent
 import net.kyori.adventure.text.format.TextDecoration
 
 /**
@@ -10,6 +12,7 @@ import net.kyori.adventure.text.format.TextDecoration
  * Every character is followed by one pixel of spacing, and bold characters are one pixel wider.
  * Bold is inherited from parent components. Only text content is measured: translatable, keybind
  * and other non-text components count as zero width, but their children are still measured.
+ * The exception is a translatable component with the key `space.<n>` from [de.ole101.lodestone.text.glyph.space], which counts as `n` pixels.
  * Characters other than ASCII and the small caps glyphs from `<small>` are assumed to be 5 pixels wide.
  */
 public fun Component.pixelWidth(): Int = pixelWidth(this, parentBold = false)
@@ -20,11 +23,14 @@ private fun pixelWidth(component: Component, parentBold: Boolean): Int {
         TextDecoration.State.FALSE -> false
         TextDecoration.State.NOT_SET -> parentBold
     }
+    val space = (component as? TranslatableComponent)?.key()
+        ?.takeIf { it.startsWith(SPACE_KEY_PREFIX) }
+        ?.substring(SPACE_KEY_PREFIX.length)?.toIntOrNull() ?: 0
     val text = (component as? TextComponent)?.content().orEmpty()
     val extraPerGlyph = if (bold) CHARACTER_SPACING + 1 else CHARACTER_SPACING
     val ownWidth = text.codePoints().map { (GLYPH_WIDTHS[it] ?: DEFAULT_GLYPH_WIDTH) + extraPerGlyph }.sum()
 
-    return ownWidth + component.children().sumOf { pixelWidth(it, bold) }
+    return space + ownWidth + component.children().sumOf { pixelWidth(it, bold) }
 }
 
 private const val CHARACTER_SPACING = 1
