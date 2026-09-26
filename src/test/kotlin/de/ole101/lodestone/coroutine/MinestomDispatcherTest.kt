@@ -6,11 +6,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.longs.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import net.minestom.server.MinecraftServer
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -94,7 +90,7 @@ class MinestomDispatcherTest : FunSpec({
             tickUntil { siblingDone.get() }
             caught shouldContainExactly listOf(failure)
         } finally {
-            exceptionManager.setExceptionHandler(previous)
+            exceptionManager.exceptionHandler = previous
             scope.cancel()
         }
     }

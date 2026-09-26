@@ -7,12 +7,7 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.property.Arb
-import io.kotest.property.arbitrary.Codepoint
-import io.kotest.property.arbitrary.alphanumeric
-import io.kotest.property.arbitrary.enum
-import io.kotest.property.arbitrary.int
-import io.kotest.property.arbitrary.list
-import io.kotest.property.arbitrary.string
+import io.kotest.property.arbitrary.*
 import io.kotest.property.checkAll
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
@@ -80,7 +75,7 @@ class GlyphOverlayTest : FunSpec({
                 .append(Component.text("c")),
         )
         line.children().filterIsInstance<TranslatableComponent>().map { it.font() } shouldContainExactly
-            listOf(Space.font, Space.font)
+                listOf(Space.font, Space.font)
     }
 
     test("throws for y other than 0 without shifted fonts") {

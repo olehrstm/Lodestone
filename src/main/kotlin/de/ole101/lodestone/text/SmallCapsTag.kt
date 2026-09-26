@@ -19,8 +19,8 @@ internal class SmallCapsTag : Modifying {
         }
     }
 
-    public companion object {
-        public val RESOLVER: TagResolver = TagResolver.resolver("small") { _, _ -> SmallCapsTag() }
+    companion object {
+        val RESOLVER: TagResolver = TagResolver.resolver("small") { _, _ -> SmallCapsTag() }
 
         private val CHARACTER_TRANSLATIONS = mapOf(
             'a' to 'ᴀ', 'b' to 'ʙ', 'c' to 'ᴄ', 'd' to 'ᴅ', 'e' to 'ᴇ',
