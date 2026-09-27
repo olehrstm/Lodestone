@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.1.0](https://github.com/olehrstm/Lodestone/compare/v1.0.0...v1.1.0) (2026-09-27)
+
+
+### Features
+
+* add asMini to glyphs ([#32](https://github.com/olehrstm/Lodestone/issues/32)) ([d3c7059](https://github.com/olehrstm/Lodestone/commit/d3c7059ce8959a97fa4a3a6f255d5ea2c642ae78))
+* add component width utility ([#23](https://github.com/olehrstm/Lodestone/issues/23)) ([bab7ede](https://github.com/olehrstm/Lodestone/commit/bab7ede398e2fa6dad8f0f19c3822be1ac1a1895))
+* add glyph overlay api ([#28](https://github.com/olehrstm/Lodestone/issues/28)) ([8dfca20](https://github.com/olehrstm/Lodestone/commit/8dfca2034a05714024c1e5956a243919aa6a9372))
+* add glyph utility ([#25](https://github.com/olehrstm/Lodestone/issues/25)) ([b00bb58](https://github.com/olehrstm/Lodestone/commit/b00bb589955d34181215688e8246f87ae3d7ff54))
+* add Minestom dispatcher and entity scope for coroutines ([#29](https://github.com/olehrstm/Lodestone/issues/29)) ([4c5aa9b](https://github.com/olehrstm/Lodestone/commit/4c5aa9b9cfb0d1c569a3a5434e95dad134eb4c1e))
+* add sign input dsl ([#27](https://github.com/olehrstm/Lodestone/issues/27)) ([789e071](https://github.com/olehrstm/Lodestone/commit/789e0716be5c71740d2ab6889ad78f915c60f01c))
+* implement reactive api inspired from Svelte 5 runes ([#30](https://github.com/olehrstm/Lodestone/issues/30)) ([3ccb160](https://github.com/olehrstm/Lodestone/commit/3ccb160acbf8c3c101cde987b4b8c240ed8284b2))
+
+
+### Bug Fixes
+
+* correct component pixel width calculation ([#31](https://github.com/olehrstm/Lodestone/issues/31)) ([975e595](https://github.com/olehrstm/Lodestone/commit/975e595667c111691b9a84912c9342985b626eeb))
+
 ## 1.0.0 (2026-09-25)
 
 
