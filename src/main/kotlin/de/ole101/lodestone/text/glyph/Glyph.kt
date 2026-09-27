@@ -1,5 +1,6 @@
 package de.ole101.lodestone.text.glyph
 
+import de.ole101.lodestone.text.MiniMessageProvider
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.ComponentLike
@@ -26,7 +27,7 @@ public class Glyph(
     override fun asComponent(): Component = Component.text(char).font(font)
 
     /** Returns this glyph as a MiniMessage string using the [font] tag. */
-    public fun asMini(): String = "<font:${font.asString()}>$char</font>"
+    public fun asMini(): String = "<font:${font.asString()}>${MiniMessageProvider.escapeTags(char.toString())}</font>"
 
     override fun toString(): String = "Glyph(font=${font.asString()}, char=U+%04X, width=$width)".format(char.code)
 }

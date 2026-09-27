@@ -39,6 +39,10 @@ public object MiniMessageProvider {
         return this.instance.deserialize(message)
     }
 
+    public fun escapeTags(message: String): String {
+        return this.instance.escapeTags(message)
+    }
+
     private fun build(extra: TagResolver): MiniMessage {
         return MiniMessage.builder()
             .tags(TagResolver.resolver(TagResolver.standard(), LodestoneTags, extra))
