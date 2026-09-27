@@ -25,5 +25,7 @@ public class Glyph(
 
     override fun asComponent(): Component = Component.text(char).font(font)
 
+    public fun asMini(): String = "<font:${font.asString()}>$char</font>"
+
     override fun toString(): String = "Glyph(font=${font.asString()}, char=U+%04X, width=$width)".format(char.code)
 }
