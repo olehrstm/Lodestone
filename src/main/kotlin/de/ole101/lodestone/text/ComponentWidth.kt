@@ -9,11 +9,14 @@ import net.kyori.adventure.text.format.TextDecoration
 /**
  * Returns the width of this component in pixels when rendered with the default Minecraft font.
  *
- * Every character is followed by one pixel of spacing, and bold characters are one pixel wider.
+ * Every character except an ordinary space (`U+0020`) is followed by one pixel of spacing.
+ * Ordinary spaces are 4 pixels wide, and ellipses (`…`) are 9 pixels wide including spacing.
+ * Bold characters, including spaces, are one pixel wider.
  * Bold is inherited from parent components. Only text content is measured: translatable, keybind
  * and other non-text components count as zero width, but their children are still measured.
  * The exception is a translatable component with the key `space.<n>` from [de.ole101.lodestone.text.glyph.space], which counts as `n` pixels.
- * Characters other than ASCII and the small caps glyphs from `<small>` are assumed to be 5 pixels wide.
+ * Known glyph widths cover ASCII, additional font symbols, ellipses and the small caps glyphs from `<small>`.
+ * Unlisted characters are assumed to be 5 pixels wide before spacing and bold are added.
  */
 public fun Component.pixelWidth(): Int = pixelWidth(this, parentBold = false)
 
@@ -27,8 +30,11 @@ private fun pixelWidth(component: Component, parentBold: Boolean): Int {
         ?.takeIf { it.startsWith(SPACE_KEY_PREFIX) }
         ?.substring(SPACE_KEY_PREFIX.length)?.toIntOrNull() ?: 0
     val text = (component as? TextComponent)?.content().orEmpty()
-    val extraPerGlyph = if (bold) CHARACTER_SPACING + 1 else CHARACTER_SPACING
-    val ownWidth = text.codePoints().map { (GLYPH_WIDTHS[it] ?: DEFAULT_GLYPH_WIDTH) + extraPerGlyph }.sum()
+    val boldWidth = if (bold) 1 else 0
+    val ownWidth = text.codePoints().map {
+        val spacing = if (it == ' '.code) 0 else CHARACTER_SPACING
+        (GLYPH_WIDTHS[it] ?: DEFAULT_GLYPH_WIDTH) + spacing + boldWidth
+    }.sum()
 
     return space + ownWidth + component.children().sumOf { pixelWidth(it, bold) }
 }
@@ -48,7 +54,18 @@ private val GLYPH_WIDTHS: Map<Int, Int> = mapOf(
     '`' to 2, 'a' to 5, 'b' to 5, 'c' to 5, 'd' to 5, 'e' to 5, 'f' to 4, 'g' to 5,
     'h' to 5, 'i' to 1, 'j' to 5, 'k' to 4, 'l' to 2, 'm' to 5, 'n' to 5, 'o' to 5,
     'p' to 5, 'q' to 5, 'r' to 5, 's' to 5, 't' to 3, 'u' to 5, 'v' to 5, 'w' to 5,
-    'x' to 5, 'y' to 5, 'z' to 5, '{' to 3, '|' to 1, '}' to 3, '~' to 6,
+    'x' to 5, 'y' to 5, 'z' to 5, '{' to 3, '|' to 1, '}' to 3, '~' to 6, '£' to 5,
+    'ƒ' to 5, 'ª' to 4, 'º' to 4, '¬' to 5, '«' to 6, '»' to 6,
+    '░' to 7, '▒' to 8, '▓' to 8, '│' to 5, '┤' to 5, '╡' to 5, '╢' to 7,
+    '╖' to 7, '╕' to 5, '╣' to 7, '║' to 7, '╗' to 7, '╝' to 7, '╜' to 7,
+    '╛' to 5, '┐' to 5, '└' to 8, '┴' to 8, '┬' to 8, '├' to 8, '─' to 8,
+    '┼' to 8, '╞' to 8, '╟' to 8, '╚' to 8, '╔' to 8, '╩' to 8, '╦' to 8,
+    '╠' to 8, '═' to 8, '╬' to 8, '╧' to 8, '╨' to 8, '╤' to 8, '╥' to 8,
+    '╙' to 8, '╘' to 8, '╒' to 8, '╓' to 8, '╫' to 8, '╪' to 8, '┘' to 5,
+    '┌' to 8, '█' to 8, '▄' to 8, '▌' to 4, '▐' to 8, '▀' to 8, '∅' to 7,
+    '∈' to 5, '≡' to 6, '±' to 5, '≥' to 5, '≤' to 5, '⌠' to 7, '⌡' to 4,
+    '÷' to 5, '≈' to 6, '°' to 4, '∙' to 5, '√' to 6, 'ⁿ' to 4, '²' to 4, '■' to 5,
+    '…' to 8,
     'ᴀ' to 5, 'ʙ' to 5, 'ᴄ' to 5, 'ᴅ' to 5, 'ᴇ' to 5, 'ғ' to 5, 'ɢ' to 5, 'ʜ' to 5,
     'ɪ' to 3, 'ᴊ' to 5, 'ᴋ' to 5, 'ʟ' to 5, 'ᴍ' to 5, 'ɴ' to 5, 'ᴏ' to 5, 'ᴘ' to 5,
     'ǫ' to 5, 'ʀ' to 5, 'ᴛ' to 5, 'ᴜ' to 5, 'ᴠ' to 5, 'ᴡ' to 5, 'ʏ' to 5, 'ᴢ' to 5,
