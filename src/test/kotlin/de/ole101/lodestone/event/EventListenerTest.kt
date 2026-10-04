@@ -1,10 +1,10 @@
 package de.ole101.lodestone.event
 
 import de.ole101.lodestone.globalEventHandler
+import de.ole101.lodestone.testing.TestServer
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
-import net.minestom.server.MinecraftServer
 import net.minestom.server.event.Event
 import net.minestom.server.event.EventNode
 
@@ -13,7 +13,7 @@ private class PongEvent : Event
 
 class EventListenerTest : FunSpec({
 
-    MinecraftServer.init()
+    TestServer.init()
 
     test("listen only receives events of the reified type") {
         val node = EventNode.all("typed")

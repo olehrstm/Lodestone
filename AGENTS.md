@@ -57,7 +57,7 @@ Follow the [Kotlin library authors' guidelines](https://kotlinlang.org/docs/api-
 
 - API style is Kotlin DSLs over Minestom types: `@DslMarker` builders (`item { }`, `Kommand`), reified `listen<T> { }` event helpers, and top-level `inline val` accessors in `Server.kt` that wrap `MinecraftServer.getX()`.
 - MiniMessage parsing goes through `MiniMessageProvider`, which always includes the standard tags plus `LodestoneTags` (`ColorTag`, `SmallCapsTag`). Register extra tags with `MiniMessageProvider.configure(...)`, not a separate `MiniMessage` instance.
-- Tests use Kotest `FunSpec`. Helpers live in `src/test/kotlin/.../testing/`. Specs touching item components call `MinestomRegistries.bind()` in `beforeSpec`. Specs touching managers or the global event handler call `MinecraftServer.init()`.
+- Tests use Kotest `FunSpec`. Helpers live in `src/test/kotlin/.../testing/`. Specs touching item components call `MinestomRegistries.bind()` in `beforeSpec`. Specs touching managers or the global event handler call `TestServer.init()`, never `MinecraftServer.init()` directly: a second process leaves the `Minestom` dispatcher on a stale scheduler.
 
 ## Git workflow
 

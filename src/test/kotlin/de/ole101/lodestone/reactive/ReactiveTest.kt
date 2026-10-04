@@ -2,13 +2,13 @@ package de.ole101.lodestone.reactive
 
 import de.ole101.lodestone.exceptionManager
 import de.ole101.lodestone.schedulerManager
+import de.ole101.lodestone.testing.TestServer
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import net.minestom.server.MinecraftServer
 
 private class ManualScheduler : FlushScheduler {
     var pending: Runnable? = null
@@ -35,7 +35,7 @@ private class ManualScheduler : FlushScheduler {
 
 class ReactiveTest : FunSpec({
 
-    beforeSpec { MinecraftServer.init() }
+    beforeSpec { TestServer.init() }
 
     lateinit var scheduler: ManualScheduler
     lateinit var scope: ReactiveScope
