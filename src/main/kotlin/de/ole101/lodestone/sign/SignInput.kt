@@ -52,7 +52,7 @@ public class SignInputBuilder internal constructor() {
 public class SignInput internal constructor(
     public val lines: List<String>,
     public val inputLines: IntRange,
-    private val onInput: (Player, String) -> Unit,
+    internal val onInput: (Player, String) -> Unit,
 ) {
     private val signData: CompoundBinaryTag = CompoundBinaryTag.empty().put(
         "front_text",
