@@ -3,6 +3,8 @@ package de.ole101.lodestone.text.glyph
 import de.ole101.lodestone.text.pixelWidth
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
 
 /**
  * Composes the glyphs and text added in [block] into one component, placing each at a pixel position.
@@ -32,8 +34,21 @@ public class GlyphOverlayBuilder internal constructor(private val shiftedFonts: 
      * Throws [IllegalArgumentException] if the glyph has no [Glyph.width].
      */
     public fun glyph(glyph: Glyph, x: Int, y: Int = 0) {
+        add(glyph, glyph.asComponent(), x, y)
+    }
+
+    /**
+     * Places [glyph] like the overload without a color, but tinted with [color]. [NamedTextColor.WHITE] shows the
+     * texture as it is, for example in a menu title, which is dark gray by default.
+     * Throws [IllegalArgumentException] if the glyph has no [Glyph.width].
+     */
+    public fun glyph(glyph: Glyph, x: Int, y: Int, color: TextColor) {
+        add(glyph, glyph.asComponent().color(color), x, y)
+    }
+
+    private fun add(glyph: Glyph, component: Component, x: Int, y: Int) {
         val width = requireNotNull(glyph.width) { "Glyph needs a width to be placed, but $glyph has none" }
-        add(x, width + 1, glyph.asComponent(), y)
+        add(x, width + 1, component, y)
     }
 
     /**
@@ -42,12 +57,7 @@ public class GlyphOverlayBuilder internal constructor(private val shiftedFonts: 
      */
     public fun text(text: Component, x: Int, y: Int = 0, align: TextAlign = TextAlign.LEFT) {
         val advance = text.pixelWidth()
-        val start = when (align) {
-            TextAlign.LEFT -> x
-            TextAlign.CENTER -> x - advance / 2
-            TextAlign.RIGHT -> x - advance
-        }
-        add(start, advance, text, y)
+        add(x - align.anchor(advance), advance, text, y)
     }
 
     private fun add(start: Int, advance: Int, component: Component, y: Int) {
@@ -86,4 +96,10 @@ public enum class TextAlign {
     LEFT,
     CENTER,
     RIGHT
+}
+
+internal fun TextAlign.anchor(width: Int): Int = when (this) {
+    TextAlign.LEFT -> 0
+    TextAlign.CENTER -> width / 2
+    TextAlign.RIGHT -> width
 }

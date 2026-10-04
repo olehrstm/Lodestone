@@ -12,6 +12,7 @@ import io.kotest.property.checkAll
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TranslatableComponent
+import net.kyori.adventure.text.format.NamedTextColor
 
 class GlyphOverlayTest : FunSpec({
 
@@ -23,6 +24,13 @@ class GlyphOverlayTest : FunSpec({
 
     test("returns an empty component when nothing is added") {
         glyphOverlay { } shouldBe Component.empty()
+    }
+
+    test("tints a glyph with the given color and keeps it when shifted") {
+        val line = glyphOverlay(shifted) { glyph(shop, x = 0, y = 4, color = NamedTextColor.WHITE) }
+
+        line.items().single().color() shouldBe NamedTextColor.WHITE
+        line.items().single().font() shouldBe Key.key("lodestone:gui_y4")
     }
 
     test("composes a glyph and centered text") {
