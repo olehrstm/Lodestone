@@ -2,12 +2,12 @@ package de.ole101.lodestone.coroutine
 
 import de.ole101.lodestone.exceptionManager
 import de.ole101.lodestone.schedulerManager
+import de.ole101.lodestone.testing.TestServer
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.longs.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.*
-import net.minestom.server.MinecraftServer
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -25,7 +25,7 @@ private fun tickUntil(done: () -> Boolean) {
 
 class MinestomDispatcherTest : FunSpec({
 
-    beforeSpec { MinecraftServer.init() }
+    beforeSpec { TestServer.init() }
 
     test("launch runs the body only when a tick is processed") {
         val scope = tickScope()

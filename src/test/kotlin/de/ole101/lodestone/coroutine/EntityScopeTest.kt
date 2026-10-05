@@ -1,19 +1,19 @@
 package de.ole101.lodestone.coroutine
 
 import de.ole101.lodestone.schedulerManager
+import de.ole101.lodestone.testing.TestServer
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import kotlinx.coroutines.isActive
-import net.minestom.server.MinecraftServer
 import net.minestom.server.entity.Entity
 import net.minestom.server.entity.EntityType
 import java.util.concurrent.atomic.AtomicBoolean
 
 class EntityScopeTest : FunSpec({
 
-    beforeSpec { MinecraftServer.init() }
+    beforeSpec { TestServer.init() }
 
     test("coroutineScope is created once per entity") {
         val entity = Entity(EntityType.ZOMBIE)

@@ -14,6 +14,7 @@ public class ReactiveScope internal constructor(
     private val effects = mutableListOf<EffectNode>()
     private val derivedValues = mutableListOf<DerivedImpl<*>>()
     private val children = mutableListOf<ReactiveScope>()
+    private val disposeHooks = mutableListOf<() -> Unit>()
     private var disposed = false
 
     public constructor(scheduler: FlushScheduler = FlushScheduler.EndOfTick) : this(Flusher(scheduler), null)
@@ -87,6 +88,20 @@ public class ReactiveScope internal constructor(
         effects.clear()
         derivedValues.clear()
         parent?.children?.remove(this)
+
+        disposeHooks.forEach { it() }
+        disposeHooks.clear()
+    }
+
+    /** Runs [block] once when this scope is disposed, after its effects and children. */
+    internal fun onDispose(block: () -> Unit) {
+        checkNotDisposed()
+        disposeHooks += block
+    }
+
+    /** Runs [block] at the end of every flush of this scope tree that settles without throwing. */
+    internal fun afterFlush(block: () -> Unit) {
+        flusher.afterFlush += block
     }
 
     private fun addEffect(block: EffectScope.() -> Unit, pre: Boolean) {

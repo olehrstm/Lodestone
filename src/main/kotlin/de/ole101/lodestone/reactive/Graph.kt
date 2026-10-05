@@ -1,7 +1,7 @@
 package de.ole101.lodestone.reactive
 
 import de.ole101.lodestone.exceptionManager
-import java.util.TreeSet
+import java.util.*
 
 internal enum class Flag { CLEAN, CHECK, DIRTY }
 
@@ -228,6 +228,7 @@ internal class Flusher(private val scheduler: FlushScheduler) {
     private var nextId = 0L
     private var scheduled = false
     private var flushing = false
+    val afterFlush = mutableListOf<() -> Unit>()
 
     fun nextId(): Long = nextId++
 
@@ -277,8 +278,16 @@ internal class Flusher(private val scheduler: FlushScheduler) {
                 runRound(preEffects)
                 runRound(effects)
             }
+
+            afterFlush.forEach { it() }
         } finally {
             flushing = false
+
+            // Writes from afterFlush hooks queue effects without scheduling, since the flush was still running
+            if (!scheduled && (preEffects.isNotEmpty() || effects.isNotEmpty())) {
+                scheduler.schedule(::flush)
+                scheduled = true
+            }
         }
     }
 
