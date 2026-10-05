@@ -3,19 +3,12 @@ package de.ole101.lodestone.menu
 import de.ole101.lodestone.menu.element.overlay
 import de.ole101.lodestone.menu.element.slot
 import de.ole101.lodestone.menu.element.text
-import de.ole101.lodestone.menu.layout.MenuFonts
 import de.ole101.lodestone.menu.layout.VAlign
 import de.ole101.lodestone.menu.layout.cell
 import de.ole101.lodestone.menu.slot.SlotPolicy
 import de.ole101.lodestone.schedulerManager
-import de.ole101.lodestone.testing.MinestomRegistries
-import de.ole101.lodestone.testing.TestServer
-import de.ole101.lodestone.testing.colors
-import de.ole101.lodestone.testing.fakePlayer
-import de.ole101.lodestone.testing.fonts
-import de.ole101.lodestone.testing.texts
+import de.ole101.lodestone.testing.*
 import de.ole101.lodestone.text.glyph.Glyph
-import de.ole101.lodestone.text.glyph.ShiftedFonts
 import de.ole101.lodestone.text.glyph.TextAlign
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
@@ -27,7 +20,7 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.ShadowColor
 import net.kyori.adventure.text.format.TextColor
 import net.minestom.server.event.EventDispatcher
 import net.minestom.server.event.inventory.InventoryPreClickEvent
@@ -43,10 +36,8 @@ class MenuTest : FunSpec({
     beforeSpec {
         TestServer.init()
         MinestomRegistries.bind()
-        MenuFonts.shiftedFonts = ShiftedFonts { base, y -> Key.key(base.namespace(), "${base.value()}_$y") }
     }
 
-    afterSpec { MenuFonts.shiftedFonts = ShiftedFonts.None }
 
     test("a state write re-renders the slot at tick end, not before") {
         lateinit var set: (Int) -> Unit
@@ -118,8 +109,9 @@ class MenuTest : FunSpec({
         val session = menu(rows = 1) { overlay(glyph, cell(0, 0), vAlign = VAlign.MIDDLE) }.create()
 
         // Slot top 17 + (18 - 8) / 2 = 22, minus the title line at 6
-        session.inventory.title.fonts() shouldContain Key.key("test:ui_16")
-        session.inventory.title.colors() shouldContain TextColor.color(NamedTextColor.WHITE)
+        session.inventory.title.fonts() shouldContain Key.key("test:ui")
+        session.inventory.title.shadows() shouldContain ShadowColor.shadowColor(0x4EB810FF)
+        session.inventory.title.colors() shouldContain TextColor.color(0x4EB000)
         session.dispose()
     }
 

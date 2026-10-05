@@ -42,7 +42,7 @@ public class MenuSession internal constructor(
     private val disposePolicy: DisposePolicy,
     setup: MenuScope.() -> Unit,
 ) {
-    internal val inventory = Inventory(type.inventoryType, Component.empty())
+    internal val inventory: Inventory = Inventory(type.inventoryType, Component.empty())
     internal val openHooks = CopyOnWriteArrayList<(Player) -> Unit>()
     internal val closeHooks = CopyOnWriteArrayList<(Player, CloseReason) -> Unit>()
     internal val clickHooks = CopyOnWriteArrayList<(ClickContext) -> Unit>()
@@ -279,7 +279,7 @@ public class MenuSession internal constructor(
                 if (item != (previous.slots[slot]?.item ?: ItemStack.AIR)) inventory.setItemStack(slot, item)
             }
         }
-        // A title that cannot be built, e.g. without shifted fonts, must not break the slots
+        // A title that cannot be built must not break the slots
         if (frame.layers != previous.layers) safely { inventory.title = frame.title(type) }
     }
 

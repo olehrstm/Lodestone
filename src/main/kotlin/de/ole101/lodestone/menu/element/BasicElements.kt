@@ -6,6 +6,7 @@ import de.ole101.lodestone.menu.layout.*
 import de.ole101.lodestone.menu.render.RenderScope
 import de.ole101.lodestone.menu.slot.SlotScope
 import de.ole101.lodestone.text.glyph.Glyph
+import de.ole101.lodestone.text.glyph.SHADER_HIDDEN_COLOR
 import de.ole101.lodestone.text.glyph.TextAlign
 import de.ole101.lodestone.text.glyph.space
 import de.ole101.lodestone.text.pixelWidth
@@ -33,6 +34,8 @@ public fun MenuScope.slot(column: Int, row: Int, block: SlotScope.() -> Unit) {
 /**
  * Draws [glyph] in the title at [at], aligned with [align] and, inside a cell, [vAlign], tinted with [color]. Throws
  * [IllegalArgumentException] if the glyph has no [Glyph.width], or no [Glyph.height] when [vAlign] is not [VAlign.TOP].
+ * Requires the GUI text shader that decodes relative shadow markers. Tint is quantized to RGB332. Rendering throws
+ * [IllegalArgumentException] if the vertical offset, including the ascent correction, is outside `-2048..2047`.
  *
  * @see de.ole101.lodestone.menu.render.RenderScope.glyph
  */
@@ -63,6 +66,8 @@ public fun MenuScope.rowOverlays(glyph: (row: Int) -> Glyph?) {
 
 /**
  * Draws the default-font text that [text] returns in the title, and redraws it when a state it read changes.
+ * Requires the GUI text shader for relative shadow markers. Colors use RGB332 precision and replace normal shadows.
+ * Rendering throws [IllegalArgumentException] if the vertical offset is outside `-2048..2047`.
  *
  * @see de.ole101.lodestone.menu.render.RenderScope.text
  */
@@ -79,7 +84,7 @@ internal fun RenderScope.spanGlyph(glyph: Glyph, columns: IntRange, row: Int) {
  * Returns the start of a tooltip that shows [glyph], a hover sprite with shader data rows,
  * centered over [columns] of [row] while the item is hovered. [tooltip] is the rest of the tooltip's first line.
  *
- * It needs text shaders in your resource pack that read this data. The glyph itself is drawn in [HOVER_HIDDEN_COLOR], which
+ * It needs text shaders in your resource pack that read this data. The glyph itself is drawn in [SHADER_HIDDEN_COLOR], which
  * the shader hides. Its shadow carries the data. Red and green are the sprite's top-left corner relative to the
  * screen center plus 128, blue and the top 3 bits of alpha are the tooltip width, and the low 5 bits of alpha are the number
  * of tooltip lines. The shader draws the shadow at the target and cuts out the part behind the tooltip.
@@ -98,12 +103,11 @@ internal fun RenderScope.hoverSprite(glyph: Glyph, columns: IntRange, row: Int, 
     // Cancels the glyph's advance, so the tooltip text after it starts where the line starts
     val advance = requireNotNull(glyph.width) + 1
     return Component.text()
-        .append(glyph.asComponent().color(HOVER_HIDDEN_COLOR).shadowColor(shadow))
+        .append(glyph.asComponent().color(SHADER_HIDDEN_COLOR).shadowColor(shadow))
         .append(space(-advance))
         .build()
 }
 
-private val HOVER_HIDDEN_COLOR = TextColor.color(0x4EB000)
 
 private fun Glyph.centeredVertically(): VAlign = if (height != null) VAlign.MIDDLE else VAlign.TOP
 

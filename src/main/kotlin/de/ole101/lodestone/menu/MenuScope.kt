@@ -135,6 +135,7 @@ public class MenuScope internal constructor(
      * Draws [text] as the title, aligned with [align] inside the menu width. Left-aligned titles start where the
      * chest's own title would. The title draws on top of all other
      * text and glyphs.
+     * Requires the GUI text shader for relative shadow markers. Colors use RGB332 precision and replace normal shadows.
      */
     public fun title(align: TextAlign = TextAlign.LEFT, text: () -> Component) {
         element { title(text(), align) }

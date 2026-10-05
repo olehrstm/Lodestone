@@ -1,6 +1,5 @@
 package de.ole101.lodestone.menu.render
 
-import de.ole101.lodestone.menu.layout.MenuFonts
 import de.ole101.lodestone.menu.layout.MenuMetrics
 import de.ole101.lodestone.menu.layout.MenuType
 import de.ole101.lodestone.menu.layout.titleX
@@ -21,14 +20,14 @@ internal sealed interface TitleLayer {
 
 internal class Frame(val slots: Map<Int, SlotView>, val layers: List<TitleLayer>) {
 
-    fun title(type: MenuType): Component = glyphOverlay(MenuFonts.shiftedFonts) {
+    fun title(type: MenuType): Component = glyphOverlay {
         for (layer in layers) {
             val x = layer.x - type.titleX
             val y = layer.y - MenuMetrics.TITLE_Y
             when (layer) {
                 // A glyph with a smaller ascent draws lower than text, so it moves up by the difference
-                is TitleLayer.GlyphLayer -> glyph(layer.glyph, x, y + layer.glyph.ascent - Glyph.DEFAULT_ASCENT, layer.color)
-                is TitleLayer.TextLayer -> text(layer.text, x, y, layer.align)
+                is TitleLayer.GlyphLayer -> shaderGlyph(layer.glyph, x, y + layer.glyph.ascent - Glyph.DEFAULT_ASCENT, layer.color)
+                is TitleLayer.TextLayer -> shaderText(layer.text, x, y, layer.align)
             }
         }
     }

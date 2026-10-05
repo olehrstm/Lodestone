@@ -14,7 +14,6 @@ import de.ole101.lodestone.testing.TestServer
 import de.ole101.lodestone.testing.fakePlayer
 import de.ole101.lodestone.testing.texts
 import de.ole101.lodestone.text.glyph.Glyph
-import de.ole101.lodestone.text.glyph.ShiftedFonts
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
@@ -35,12 +34,10 @@ class ElementsTest : FunSpec({
     beforeSpec {
         TestServer.init()
         MinestomRegistries.bind()
-        MenuFonts.shiftedFonts = ShiftedFonts { base, y -> Key.key(base.namespace(), "${base.value()}_$y") }
         MenuFonts.hoverTooltipStyle = "test:hover"
     }
 
     afterSpec {
-        MenuFonts.shiftedFonts = ShiftedFonts.None
         MenuFonts.hoverTooltipStyle = null
     }
 
@@ -99,7 +96,6 @@ class ElementsTest : FunSpec({
         val log = mutableListOf<String>()
         val glyph = Glyph(Key.key("test:ui"), 'a', 16)
         val session = menu(rows = 1) {
-            // Row 0 needs shifted fonts for the glyph; the title failing must not break the slot
             button(0, glyph, glyph, cooldown = 1.minutes) {
                 onClick { log += "click" }
                 onDisabledClick { log += "disabled" }
