@@ -3,6 +3,7 @@ package de.ole101.lodestone.text.glyph
 import de.ole101.lodestone.text.pixelWidth
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.TranslatableComponent
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
 
@@ -49,6 +50,34 @@ public class GlyphOverlayBuilder internal constructor(private val shiftedFonts: 
     private fun add(glyph: Glyph, component: Component, x: Int, y: Int) {
         val width = requireNotNull(glyph.width) { "Glyph needs a width to be placed, but $glyph has none" }
         add(x, width + 1, component, y)
+    }
+
+    /** Draws the glyph's shadow as a sprite positioned by the GUI text shader, hiding its foreground. */
+    internal fun shaderGlyph(glyph: Glyph, x: Int, y: Int, color: TextColor) {
+        val component = glyph.asComponent()
+            .color(SHADER_HIDDEN_COLOR)
+            .shadowColor(buildRelativeShadowMarker(y, color))
+        add(glyph, component, x, 0)
+    }
+
+    /** Positions text using shadow markers while retaining its font, decorations, and inherited tint. */
+    internal fun shaderText(text: Component, x: Int, y: Int, align: TextAlign) {
+        val advance = text.pixelWidth()
+        add(x - align.anchor(advance), advance, text.withRelativeShadow(y, TITLE_COLOR), 0)
+    }
+
+    private fun Component.withRelativeShadow(y: Int, inheritedColor: TextColor): Component {
+        val tint = color() ?: inheritedColor
+        var marked = color(SHADER_HIDDEN_COLOR)
+            .shadowColor(buildRelativeShadowMarker(y, tint))
+            .children(children().map { it.withRelativeShadow(y, tint) })
+        if (marked is TranslatableComponent && this is TranslatableComponent) {
+            marked = marked.arguments(arguments().map { argument ->
+                val value = argument.value()
+                if (value is Component) value.withRelativeShadow(y, tint) else argument
+            })
+        }
+        return marked
     }
 
     /**

@@ -23,3 +23,7 @@ internal fun Component.colors(): List<TextColor> = buildList {
 
 /** Every font set on this component or one of its children, in depth-first order. */
 internal fun Component.fonts(): List<Key> = listOfNotNull(font()) + children().flatMap { it.fonts() }
+
+/** Every shadow color explicitly set in this component tree. */
+internal fun Component.shadows(): List<net.kyori.adventure.text.format.ShadowColor> =
+    listOfNotNull(shadowColor()) + children().flatMap { it.shadows() }
