@@ -6,7 +6,7 @@ import net.minestom.server.network.player.GameProfile
 import net.minestom.server.network.player.PlayerConnection
 import java.net.InetSocketAddress
 import java.net.SocketAddress
-import java.util.UUID
+import java.util.*
 
 private class FakeConnection : PlayerConnection() {
     override fun sendPacket(packet: SendablePacket) {}
