@@ -221,4 +221,12 @@ class MenuTest : FunSpec({
         }
         shouldThrow<IllegalArgumentException> { menu(rows = 7) {} }
     }
+
+    test("the title can move down") {
+        val session = menu(rows = 1) { title(y = 8) { Component.text("x") } }.create()
+
+        // 2 pixels below the title line, tinted with the title color
+        session.inventory.title.shadows() shouldContain ShadowColor.shadowColor(0x4EB80249)
+        session.dispose()
+    }
 })

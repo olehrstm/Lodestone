@@ -107,13 +107,13 @@ public class RenderScope internal constructor(
         }
     }
 
-    internal fun title(text: Component, align: TextAlign) {
+    internal fun title(text: Component, align: TextAlign, y: Int) {
         val x = when (align) {
             TextAlign.LEFT -> type.titleLeft
             TextAlign.CENTER -> MenuMetrics.GUI_WIDTH / 2
             TextAlign.RIGHT -> MenuMetrics.GUI_WIDTH - MenuMetrics.TITLE_X
         }
-        layers += TitleLayer.TextLayer(text, x, MenuMetrics.TITLE_Y, align, onTop = true)
+        layers += TitleLayer.TextLayer(text, x, y, align, onTop = true)
     }
 }
 

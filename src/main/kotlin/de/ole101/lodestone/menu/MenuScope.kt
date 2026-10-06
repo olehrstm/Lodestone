@@ -1,5 +1,6 @@
 package de.ole101.lodestone.menu
 
+import de.ole101.lodestone.menu.layout.MenuMetrics
 import de.ole101.lodestone.menu.render.MenuElement
 import de.ole101.lodestone.menu.render.Region
 import de.ole101.lodestone.menu.render.RenderScope
@@ -136,12 +137,12 @@ public class MenuScope internal constructor(
 
     /**
      * Draws [text] as the title, aligned with [align] inside the menu width. Left-aligned titles start where the
-     * chest's own title would. The title draws on top of all other
-     * text and glyphs.
+     * container's own title would. [y] is the GUI y of the text's top, by default where the container's own title is,
+     * so `y = MenuMetrics.TITLE_Y + 2` moves it 2 pixels down. The title draws on top of all other text and glyphs.
      * Requires the GUI text shader for relative shadow markers. Colors use RGB332 precision and replace normal shadows.
      */
-    public fun title(align: TextAlign = TextAlign.LEFT, text: () -> Component) {
-        element { title(text(), align) }
+    public fun title(align: TextAlign = TextAlign.LEFT, y: Int = MenuMetrics.TITLE_Y, text: () -> Component) {
+        element { title(text(), align, y) }
     }
 
     public fun onOpen(hook: (viewer: Player) -> Unit) {
