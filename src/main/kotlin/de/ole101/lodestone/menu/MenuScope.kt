@@ -30,6 +30,9 @@ public class MenuScope internal constructor(
     /** The players viewing this menu. Reading it in an effect or element tracks it. */
     public val viewers: Set<Player> get() = session.viewers
 
+    /** The current rename text of an anvil menu. See [MenuSession.anvilInput]. */
+    public val anvilInput: String get() = session.anvilInput
+
     public fun <T> state(initial: T): State<T> = reactive.state(initial)
 
     public fun <T> derived(compute: () -> T): Derived<T> = reactive.derived(compute)

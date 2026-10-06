@@ -23,6 +23,7 @@ import net.minestom.server.entity.Player
 import net.minestom.server.event.inventory.InventoryCloseEvent
 import net.minestom.server.event.inventory.InventoryItemChangeEvent
 import net.minestom.server.event.inventory.InventoryPreClickEvent
+import net.minestom.server.event.player.PlayerAnvilInputEvent
 import net.minestom.server.event.player.PlayerDisconnectEvent
 import net.minestom.server.inventory.Inventory
 import net.minestom.server.inventory.click.Click
@@ -85,6 +86,29 @@ public class MenuSession internal constructor(
 
     private val currentViewers: Set<Player> get() = untrack { viewers }
 
+    /**
+     * The current anvil rename text, initially empty. Reading it in an element tracks changes.
+     * Typed text keeps only printable ASCII characters and is trimmed. It is empty for chest menus.
+     * Anvil text is shared by the viewers of this session.
+     */
+    public var anvilInput: String by state("")
+        private set
+
+    private var hasAnvilInput: Boolean = false
+
+    // The text as the client shows it, so seeding slot 0 does not change what the player typed
+    private var typedAnvilText = ""
+
+    internal fun initializeAnvilInput(initial: String) {
+        check(type == MenuType.ANVIL) { "Anvil input requires ANVIL, but was $type" }
+        check(!hasAnvilInput) { "Anvil input is already configured" }
+        hasAnvilInput = true
+        typedAnvilText = initial
+        anvilInput = sanitizeAnvilText(initial)
+    }
+
+    private fun sanitizeAnvilText(text: String): String = text.filter { it in ' '..'~' }.trim()
+
     init {
         listen<InventoryPreClickEvent>(node, ::handleClick)
         listen<InventoryCloseEvent>(node) { event ->
@@ -98,6 +122,15 @@ public class MenuSession internal constructor(
         }
         listen<InventoryItemChangeEvent>(node, ::handleChange)
         listen<PlayerDisconnectEvent>(node) { event -> returnItemsOf(event.player) }
+        listen<PlayerAnvilInputEvent>(node) { event ->
+            if (type == MenuType.ANVIL && event.inventory === inventory && event.player in currentViewers) {
+                typedAnvilText = event.input
+                val text = sanitizeAnvilText(event.input)
+                if (text != anvilInput) anvilInput = text
+                // The client predicts a rename result while typing, so the menu's result item is sent again
+                inventory.sendSlotRefresh(2, inventory.getItemStack(2))
+            }
+        }
         reactive.afterFlush(::commit)
 
         try {
@@ -173,11 +206,21 @@ public class MenuSession internal constructor(
     public fun canGoBack(player: Player): Boolean = backs[player]?.isDisposed == false
 
     private fun openViewer(player: Player): Boolean {
-        if (player in currentViewers || !player.openInventory(inventory)) return false
+        if (player in currentViewers) return false
+        seedAnvilInput()
+        if (!player.openInventory(inventory)) return false
 
         viewers = currentViewers + player
         openHooks.forEach { hook -> safely { hook(player) } }
         return true
+    }
+
+    private fun seedAnvilInput() {
+        if (hasAnvilInput) {
+            withoutChangeEvents {
+                inventory.setItemStack(0, inventory.getItemStack(0).withCustomName(Component.text(typedAnvilText)))
+            }
+        }
     }
 
     // The player will not come back here, so neither to the sessions before this one
@@ -293,8 +336,12 @@ public class MenuSession internal constructor(
                 if (item != (previous.slots[slot]?.item ?: ItemStack.AIR)) inventory.setItemStack(slot, item)
             }
         }
-        // A title that cannot be built must not break the slots
-        if (frame.layers != previous.layers) safely { inventory.title = frame.title(type) }
+        // The client resets the anvil text to the name of slot 0 when it changes or the window reopens
+        if (frame.slots[0]?.item != previous.slots[0]?.item) seedAnvilInput()
+        if (frame.layers != previous.layers) safely {
+            seedAnvilInput()
+            inventory.title = frame.title(type)
+        }
     }
 
     private fun tick() {
