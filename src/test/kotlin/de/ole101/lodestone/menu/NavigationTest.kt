@@ -82,4 +82,19 @@ class NavigationTest : FunSpec({
         session.viewers shouldBe setOf(player)
         session.dispose()
     }
+
+    test("opening a session that is already open keeps the whole way back") {
+        val player = fakePlayer()
+        val root = menu(rows = 1) {}.open(player)
+        val middle = menu(rows = 1) {}.open(player, back = root)
+        val top = menu(rows = 1) {}.open(player, back = middle)
+
+        top.open(player, back = middle)
+
+        middle.isDisposed.shouldBeFalse()
+        root.isDisposed.shouldBeFalse()
+        top.goBack(player).shouldBeTrue()
+        middle.goBack(player).shouldBeTrue()
+        root.dispose()
+    }
 })

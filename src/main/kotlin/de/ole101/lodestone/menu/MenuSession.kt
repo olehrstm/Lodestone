@@ -134,9 +134,13 @@ public class MenuSession internal constructor(
         check(!back.isDisposed) { "$back is disposed" }
         require(back !== this) { "A session cannot be its own way back" }
 
-        back.away += player
+        // The player may already be away from back, for example when this session is opened twice
+        val wasAway = !back.away.add(player)
         if (!openViewer(player)) {
-            back.release(player)
+            if (!wasAway) {
+                back.away -= player
+                back.disposeIfUnused()
+            }
             return
         }
         backs.put(player, back)?.takeIf { it !== back }?.release(player)
@@ -240,7 +244,10 @@ public class MenuSession internal constructor(
         set(type.slotIndex(column, row), item)
     }
 
-    /** Closes this session for all viewers. With [DisposePolicy.WHEN_EMPTY] this disposes it. */
+    /**
+     * Closes this session for all viewers. With [DisposePolicy.WHEN_EMPTY] this disposes it once no player can come
+     * back to it.
+     */
     public fun close() {
         currentViewers.forEach { if (it.openInventory === inventory) it.closeInventory() }
     }
