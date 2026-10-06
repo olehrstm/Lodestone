@@ -2,7 +2,11 @@ package de.ole101.lodestone.coroutine
 
 import de.ole101.lodestone.exceptionManager
 import de.ole101.lodestone.schedulerManager
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
 
 /**
  * Resumes coroutines at the start of the next server tick, on the tick scheduler thread, where it is

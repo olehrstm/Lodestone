@@ -1,7 +1,12 @@
 package de.ole101.lodestone.coroutine
 
 import de.ole101.lodestone.event.listen
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import net.minestom.server.entity.Entity
 import net.minestom.server.event.entity.EntityDespawnEvent

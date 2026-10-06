@@ -7,7 +7,13 @@ import de.ole101.lodestone.menu.layout.VAlign
 import de.ole101.lodestone.menu.layout.cell
 import de.ole101.lodestone.menu.slot.SlotPolicy
 import de.ole101.lodestone.schedulerManager
-import de.ole101.lodestone.testing.*
+import de.ole101.lodestone.testing.MinestomRegistries
+import de.ole101.lodestone.testing.TestServer
+import de.ole101.lodestone.testing.colors
+import de.ole101.lodestone.testing.fakePlayer
+import de.ole101.lodestone.testing.fonts
+import de.ole101.lodestone.testing.shadows
+import de.ole101.lodestone.testing.texts
 import de.ole101.lodestone.text.glyph.Glyph
 import de.ole101.lodestone.text.glyph.TextAlign
 import io.kotest.assertions.throwables.shouldThrow

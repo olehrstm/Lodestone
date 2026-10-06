@@ -1,8 +1,12 @@
 package de.ole101.lodestone.menu.element
 
 import de.ole101.lodestone.item.item
-import de.ole101.lodestone.menu.*
+import de.ole101.lodestone.menu.MenuBlueprint
+import de.ole101.lodestone.menu.MenuDsl
+import de.ole101.lodestone.menu.MenuScope
+import de.ole101.lodestone.menu.MenuSession
 import de.ole101.lodestone.menu.layout.MenuType
+import de.ole101.lodestone.menu.menu
 import net.kyori.adventure.text.Component
 import net.minestom.server.component.DataComponents
 import net.minestom.server.entity.Player

@@ -3,7 +3,11 @@ package de.ole101.lodestone.menu.element
 import de.ole101.lodestone.menu.MenuDsl
 import de.ole101.lodestone.menu.MenuScope
 import de.ole101.lodestone.menu.MenuSession
-import de.ole101.lodestone.menu.layout.*
+import de.ole101.lodestone.menu.layout.MenuFonts
+import de.ole101.lodestone.menu.layout.Position
+import de.ole101.lodestone.menu.layout.cell
+import de.ole101.lodestone.menu.layout.cellOf
+import de.ole101.lodestone.menu.layout.playerCell
 import de.ole101.lodestone.menu.render.RenderScope
 import de.ole101.lodestone.menu.slot.ClickContext
 import de.ole101.lodestone.menu.slot.SlotScope

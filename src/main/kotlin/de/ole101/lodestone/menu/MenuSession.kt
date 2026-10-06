@@ -11,7 +11,11 @@ import de.ole101.lodestone.menu.layout.inventoryType
 import de.ole101.lodestone.menu.layout.slotIndex
 import de.ole101.lodestone.menu.render.Frame
 import de.ole101.lodestone.menu.render.Region
-import de.ole101.lodestone.menu.slot.*
+import de.ole101.lodestone.menu.slot.ClickContext
+import de.ole101.lodestone.menu.slot.SlotView
+import de.ole101.lodestone.menu.slot.allows
+import de.ole101.lodestone.menu.slot.canPlace
+import de.ole101.lodestone.menu.slot.canTake
 import de.ole101.lodestone.reactive.ReactiveScope
 import de.ole101.lodestone.reactive.state
 import de.ole101.lodestone.reactive.untrack
@@ -33,7 +37,7 @@ import net.minestom.server.network.packet.server.play.WindowItemsPacket
 import net.minestom.server.tag.Tag
 import net.minestom.server.timer.TaskSchedule
 import net.minestom.server.utils.inventory.PlayerInventoryUtils
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration

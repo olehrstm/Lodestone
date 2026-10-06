@@ -7,7 +7,11 @@ import net.minestom.server.adventure.bossbar.BossBarManager
 import net.minestom.server.command.CommandManager
 import net.minestom.server.dialog.Dialog
 import net.minestom.server.entity.damage.DamageType
-import net.minestom.server.entity.metadata.animal.*
+import net.minestom.server.entity.metadata.animal.ChickenVariant
+import net.minestom.server.entity.metadata.animal.CowVariant
+import net.minestom.server.entity.metadata.animal.FrogVariant
+import net.minestom.server.entity.metadata.animal.PigVariant
+import net.minestom.server.entity.metadata.animal.ZombieNautilusVariant
 import net.minestom.server.entity.metadata.animal.tameable.CatVariant
 import net.minestom.server.entity.metadata.animal.tameable.WolfSoundVariant
 import net.minestom.server.entity.metadata.animal.tameable.WolfVariant

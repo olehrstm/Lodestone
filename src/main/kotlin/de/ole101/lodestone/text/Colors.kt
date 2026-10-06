@@ -1,7 +1,7 @@
 package de.ole101.lodestone.text
 
 import net.kyori.adventure.text.format.TextColor
-import java.util.*
+import java.util.Collections
 
 /**
  * A list of all named CSS colors as Adventure [TextColor]s.

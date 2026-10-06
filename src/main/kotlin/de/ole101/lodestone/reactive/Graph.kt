@@ -1,7 +1,7 @@
 package de.ole101.lodestone.reactive
 
 import de.ole101.lodestone.exceptionManager
-import java.util.*
+import java.util.TreeSet
 
 internal enum class Flag { CLEAN, CHECK, DIRTY }
 

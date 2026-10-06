@@ -2,7 +2,16 @@ package de.ole101.lodestone.menu.element
 
 import de.ole101.lodestone.item.item
 import de.ole101.lodestone.menu.MenuScope
-import de.ole101.lodestone.menu.layout.*
+import de.ole101.lodestone.menu.layout.MenuFonts
+import de.ole101.lodestone.menu.layout.MenuMetrics
+import de.ole101.lodestone.menu.layout.Position
+import de.ole101.lodestone.menu.layout.VAlign
+import de.ole101.lodestone.menu.layout.cell
+import de.ole101.lodestone.menu.layout.checkSlot
+import de.ole101.lodestone.menu.layout.guiHeight
+import de.ole101.lodestone.menu.layout.px
+import de.ole101.lodestone.menu.layout.slotIndex
+import de.ole101.lodestone.menu.layout.slotY
 import de.ole101.lodestone.menu.render.RenderScope
 import de.ole101.lodestone.menu.render.requirePlayerSlot
 import de.ole101.lodestone.menu.slot.SlotScope
