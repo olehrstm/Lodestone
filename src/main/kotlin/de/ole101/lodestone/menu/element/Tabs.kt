@@ -3,6 +3,7 @@ package de.ole101.lodestone.menu.element
 import de.ole101.lodestone.menu.MenuDsl
 import de.ole101.lodestone.menu.MenuScope
 import de.ole101.lodestone.menu.layout.MenuType
+import de.ole101.lodestone.menu.layout.cell
 import de.ole101.lodestone.menu.layout.cellOf
 import de.ole101.lodestone.reactive.State
 import de.ole101.lodestone.text.glyph.Glyph
@@ -21,7 +22,7 @@ public fun <K> MenuScope.tabs(initial: K, block: TabsScope<K>.() -> Unit): Tabs<
 
     element {
         declared.forEachIndexed { index, tab ->
-            spanGlyph(if (tabs.active == tab.key) tab.activeGlyph else tab.glyph, tab.columns, tab.row)
+            spanGlyph(if (tabs.active == tab.key) tab.activeGlyph else tab.glyph, cell(tab.columns, tab.row))
             for (slot in slots[index]) {
                 slot(slot) {
                     item { invisible }

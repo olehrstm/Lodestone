@@ -3,9 +3,10 @@ package de.ole101.lodestone.menu.element
 import de.ole101.lodestone.menu.MenuDsl
 import de.ole101.lodestone.menu.MenuScope
 import de.ole101.lodestone.menu.MenuSession
-import de.ole101.lodestone.menu.layout.MenuFonts
-import de.ole101.lodestone.menu.layout.cellOf
+import de.ole101.lodestone.menu.layout.*
+import de.ole101.lodestone.menu.render.RenderScope
 import de.ole101.lodestone.menu.slot.ClickContext
+import de.ole101.lodestone.menu.slot.SlotScope
 import de.ole101.lodestone.text.glyph.Glyph
 import kotlinx.coroutines.delay
 import net.kyori.adventure.text.Component
@@ -56,7 +57,59 @@ public fun MenuScope.button(
     cooldown: Duration = 300.milliseconds,
     block: ButtonScope.() -> Unit,
 ) {
-    val slots = spanSlots(columns, row)
+    button(cell(columns, row), spanSlots(columns, row), glyph, pressed, disabled, cooldown, block) { index, slotBlock ->
+        slot(index, slotBlock)
+    }
+}
+
+/**
+ * Adds a button over the slot at [column] and [row] of each viewer's own inventory. Rows 0 to 2 are the main
+ * inventory from the top and row 3 is the hotbar. Viewers see the button instead of their own item while the menu is
+ * open. See the `button` overload with a slot index for the rest.
+ * Throws [IllegalArgumentException] if the slot is outside 9 by 4, a glyph has no width, or [cooldown] is negative.
+ */
+public fun MenuScope.playerButton(
+    column: Int,
+    row: Int,
+    glyph: Glyph,
+    pressed: Glyph,
+    disabled: Glyph = glyph,
+    cooldown: Duration = 300.milliseconds,
+    block: ButtonScope.() -> Unit,
+) {
+    playerButton(column..column, row, glyph, pressed, disabled, cooldown, block)
+}
+
+/**
+ * Adds a button that spans the slots in [columns] of [row] of each viewer's own inventory, for glyphs wider than one
+ * slot. See the `playerButton` overload with one column.
+ */
+public fun MenuScope.playerButton(
+    columns: IntRange,
+    row: Int,
+    glyph: Glyph,
+    pressed: Glyph,
+    disabled: Glyph = glyph,
+    cooldown: Duration = 300.milliseconds,
+    block: ButtonScope.() -> Unit,
+) {
+    val at = playerCell(columns, row)
+    button(at, columns.map { row * 9 + it }, glyph, pressed, disabled, cooldown, block) { index, slotBlock ->
+        playerSlot(index % 9, index / 9, slotBlock)
+    }
+}
+
+// Draws the button over [at] and fills each of [slots] through [fill], in the menu or the player's inventory
+private fun MenuScope.button(
+    at: Position,
+    slots: List<Int>,
+    glyph: Glyph,
+    pressed: Glyph,
+    disabled: Glyph,
+    cooldown: Duration,
+    block: ButtonScope.() -> Unit,
+    fill: RenderScope.(index: Int, block: SlotScope.() -> Unit) -> Unit,
+) {
     require(!cooldown.isNegative()) { "Cooldown must not be negative, but was $cooldown" }
     for (shown in listOf(glyph, pressed, disabled)) requireWidth(shown)
     val button = ButtonScope(session).apply(block)
@@ -68,12 +121,12 @@ public fun MenuScope.button(
             !button.enabled() -> disabled
             else -> glyph
         }
-        spanGlyph(shown, columns, row)
+        spanGlyph(shown, at)
         val tooltip = button.tooltip?.invoke()
-        val hover = button.hover?.takeIf { button.enabled() }?.let { hoverSprite(it, columns, row, tooltip) }
+        val hover = button.hover?.takeIf { button.enabled() }?.let { hoverSprite(it, at, tooltip) }
         val invisible = invisibleItem(tooltip, hover)
         for (slot in slots) {
-            slot(slot) {
+            fill(slot) {
                 item { invisible }
                 onClick { click ->
                     if (isPressed.value || !button.enabled()) {

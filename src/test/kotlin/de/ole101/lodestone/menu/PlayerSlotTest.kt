@@ -1,12 +1,20 @@
 package de.ole101.lodestone.menu
 
+import de.ole101.lodestone.menu.element.overlay
+import de.ole101.lodestone.menu.element.playerButton
 import de.ole101.lodestone.menu.element.playerSlot
+import de.ole101.lodestone.menu.layout.playerCell
 import de.ole101.lodestone.testing.MinestomRegistries
 import de.ole101.lodestone.testing.TestServer
 import de.ole101.lodestone.testing.fakePlayer
+import de.ole101.lodestone.testing.shadows
+import de.ole101.lodestone.text.glyph.Glyph
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
+import net.kyori.adventure.key.Key
+import net.kyori.adventure.text.format.ShadowColor
 import net.minestom.server.event.EventDispatcher
 import net.minestom.server.event.inventory.InventoryPreClickEvent
 import net.minestom.server.inventory.click.Click
@@ -58,5 +66,22 @@ class PlayerSlotTest : FunSpec({
     test("player slots outside 9 by 4 are rejected") {
         shouldThrow<IllegalArgumentException> { menu(rows = 1) { playerSlot(0, 4) {} }.create() }
         shouldThrow<IllegalArgumentException> { menu(rows = 1) { playerSlot(9, 0) {} }.create() }
+    }
+
+    test("a player button draws over the player's inventory and is pressed from its slot") {
+        val player = fakePlayer()
+        val glyph = Glyph(Key.key("test:ui"), 'a', 16)
+        var clicks = 0
+        val session = menu(rows = 3) {
+            playerButton(4, 3, glyph, glyph) { onClick { clicks++ } }
+            overlay(glyph, playerCell(0, 0))
+        }.open(player)
+
+        EventDispatcher.call(InventoryPreClickEvent(player.inventory, player, Click.Left(4)))
+
+        clicks shouldBe 1
+        // The main inventory of a 3-row chest starts at y 84, which is 78 below the title line
+        session.inventory.title.shadows() shouldContain ShadowColor.shadowColor(0x4EB84EFF)
+        session.dispose()
     }
 })

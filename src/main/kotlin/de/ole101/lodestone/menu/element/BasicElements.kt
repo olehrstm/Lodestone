@@ -88,22 +88,22 @@ public fun MenuScope.text(at: Position, align: TextAlign = TextAlign.LEFT, vAlig
     element { text(at, align, vAlign, text) }
 }
 
-/** Draws [glyph] centered over [columns] of [row], also vertically when the glyph has a height. */
-internal fun RenderScope.spanGlyph(glyph: Glyph, columns: IntRange, row: Int) {
-    glyph(glyph, cell(columns, row), TextAlign.CENTER, glyph.centeredVertically())
+/** Draws [glyph] centered over the cells [at], also vertically when the glyph has a height. */
+internal fun RenderScope.spanGlyph(glyph: Glyph, at: Position) {
+    glyph(glyph, at, TextAlign.CENTER, glyph.centeredVertically())
 }
 
 /**
  * Returns the start of a tooltip that shows [glyph], a hover sprite with shader data rows,
- * centered over [columns] of [row] while the item is hovered. [tooltip] is the rest of the tooltip's first line.
+ * centered over the cells [at] while the item is hovered. [tooltip] is the rest of the tooltip's first line.
  *
  * It needs text shaders in your resource pack that read this data. The glyph itself is drawn in [SHADER_HIDDEN_COLOR], which
  * the shader hides. Its shadow carries the data. Red and green are the sprite's top-left corner relative to the
  * screen center plus 128, blue and the top 3 bits of alpha are the tooltip width, and the low 5 bits of alpha are the number
  * of tooltip lines. The shader draws the shadow at the target and cuts out the part behind the tooltip.
  */
-internal fun RenderScope.hoverSprite(glyph: Glyph, columns: IntRange, row: Int, tooltip: Component?): Component {
-    val (x, y) = glyphPosition(glyph, cell(columns, row), TextAlign.CENTER, glyph.centeredVertically())
+internal fun RenderScope.hoverSprite(glyph: Glyph, at: Position, tooltip: Component?): Component {
+    val (x, y) = glyphPosition(glyph, at, TextAlign.CENTER, glyph.centeredVertically())
     // The client centers the GUI on the screen, so its center is the screen center
     val dx = x - MenuMetrics.GUI_WIDTH / 2 + 128
     val dy = y - session.type.guiHeight / 2 + 128
