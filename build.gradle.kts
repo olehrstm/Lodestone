@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     `java-library`
     `maven-publish`
+    alias(libs.plugins.spotless)
+    alias(libs.plugins.detekt)
 }
 
 group = "de.ole101.lodestone"
@@ -49,6 +51,12 @@ java {
 kotlin {
     jvmToolchain(25)
     explicitApi()
+}
+
+spotless {
+    kotlin {
+        ktlint()
+    }
 }
 
 publishing {
