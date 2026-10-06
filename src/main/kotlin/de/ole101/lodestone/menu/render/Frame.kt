@@ -14,8 +14,20 @@ internal sealed interface TitleLayer {
     val x: Int
     val y: Int
 
-    data class GlyphLayer(val glyph: Glyph, override val x: Int, override val y: Int, val color: TextColor) : TitleLayer
-    data class TextLayer(val text: Component, override val x: Int, override val y: Int, val align: TextAlign, val onTop: Boolean = false) : TitleLayer
+    data class GlyphLayer(
+        val glyph: Glyph,
+        override val x: Int,
+        override val y: Int,
+        val color: TextColor,
+    ) : TitleLayer
+
+    data class TextLayer(
+        val text: Component,
+        override val x: Int,
+        override val y: Int,
+        val align: TextAlign,
+        val onTop: Boolean = false,
+    ) : TitleLayer
 }
 
 internal class Frame(
@@ -24,18 +36,19 @@ internal class Frame(
     // Slots of the viewer's own inventory, by row-major index with the hotbar as row 3
     val playerSlots: Map<Int, SlotView> = emptyMap(),
 ) {
+    fun title(type: MenuType): Component =
+        glyphOverlay {
+            for (layer in layers) {
+                val x = layer.x - type.titleX
+                val y = layer.y - MenuMetrics.TITLE_Y
+                when (layer) {
+                    // A glyph with a smaller ascent draws lower than text, so it moves up by the difference
+                    is TitleLayer.GlyphLayer -> shaderGlyph(layer.glyph, x, y + layer.glyph.ascent - Glyph.DEFAULT_ASCENT, layer.color)
 
-    fun title(type: MenuType): Component = glyphOverlay {
-        for (layer in layers) {
-            val x = layer.x - type.titleX
-            val y = layer.y - MenuMetrics.TITLE_Y
-            when (layer) {
-                // A glyph with a smaller ascent draws lower than text, so it moves up by the difference
-                is TitleLayer.GlyphLayer -> shaderGlyph(layer.glyph, x, y + layer.glyph.ascent - Glyph.DEFAULT_ASCENT, layer.color)
-                is TitleLayer.TextLayer -> shaderText(layer.text, x, y, layer.align)
+                    is TitleLayer.TextLayer -> shaderText(layer.text, x, y, layer.align)
+                }
             }
         }
-    }
 
     companion object {
         val EMPTY: Frame = Frame(emptyMap(), emptyList())
@@ -73,7 +86,9 @@ internal class Region {
                         playerSlots += entry.playerSlots
                     }
 
-                    is BlockEntry -> entry.regions.forEach(::collect)
+                    is BlockEntry -> {
+                        entry.regions.forEach(::collect)
+                    }
                 }
             }
         }

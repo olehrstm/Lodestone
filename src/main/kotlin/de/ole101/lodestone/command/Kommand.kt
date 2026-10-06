@@ -30,9 +30,13 @@ public annotation class KommandDsl
  * ```
  */
 @KommandDsl
-public abstract class Kommand(name: String, vararg aliases: String) : Command(name, *aliases) {
-
-    public class CommandScope(public val context: CommandContext) {
+public abstract class Kommand(
+    name: String,
+    vararg aliases: String,
+) : Command(name, *aliases) {
+    public class CommandScope(
+        public val context: CommandContext,
+    ) {
         /** Returns the value parsed for this argument, or `null` when the input left it out, and it has no default value. */
         public operator fun <T> Argument<T>.invoke(): T = context.get(this)
     }
@@ -59,7 +63,7 @@ public abstract class Kommand(name: String, vararg aliases: String) : Command(na
 
     public inline fun <reified S : CommandSender> syntax(
         vararg arguments: Argument<*>,
-        noinline block: CommandScope.(S) -> Unit
+        noinline block: CommandScope.(S) -> Unit,
     ) {
         addSyntax(executorFor(S::class.java, block), *arguments)
     }
@@ -67,13 +71,13 @@ public abstract class Kommand(name: String, vararg aliases: String) : Command(na
     @JvmName("syntaxPlayer")
     public fun syntax(
         vararg arguments: Argument<*>,
-        block: CommandScope.(Player) -> Unit
+        block: CommandScope.(Player) -> Unit,
     ): Unit = syntax<Player>(*arguments, block = block)
 
     public inline fun <reified S : CommandSender> conditionalSyntax(
         vararg arguments: Argument<*>,
         noinline condition: (S, String?) -> Boolean,
-        noinline block: CommandScope.(S) -> Unit
+        noinline block: CommandScope.(S) -> Unit,
     ) {
         addConditionalSyntax(conditionFor(S::class.java, condition), executorFor(S::class.java, block), *arguments)
     }
@@ -82,10 +86,14 @@ public abstract class Kommand(name: String, vararg aliases: String) : Command(na
     public fun conditionalSyntax(
         vararg arguments: Argument<*>,
         condition: (Player, String?) -> Boolean,
-        block: CommandScope.(Player) -> Unit
+        block: CommandScope.(Player) -> Unit,
     ): Unit = conditionalSyntax<Player>(*arguments, condition = condition, block = block)
 
-    public fun subkommand(name: String, vararg aliases: String, block: Kommand.() -> Unit) {
+    public fun subkommand(
+        name: String,
+        vararg aliases: String,
+        block: Kommand.() -> Unit,
+    ) {
         val subcommand = object : Kommand(name, *aliases) {}
         subcommand.block()
         addSubcommand(subcommand)
@@ -96,18 +104,22 @@ public abstract class Kommand(name: String, vararg aliases: String) : Command(na
     }
 
     @PublishedApi
-    internal fun <S : CommandSender> executorFor(type: Class<S>, block: CommandScope.(S) -> Unit): CommandExecutor {
-        return CommandExecutor { sender, context ->
+    internal fun <S : CommandSender> executorFor(
+        type: Class<S>,
+        block: CommandScope.(S) -> Unit,
+    ): CommandExecutor =
+        CommandExecutor { sender, context ->
             if (type.isInstance(sender)) {
                 CommandScope(context).block(type.cast(sender))
             }
         }
-    }
 
     @PublishedApi
-    internal fun <S : CommandSender> conditionFor(type: Class<S>, block: (S, String?) -> Boolean): CommandCondition {
-        return CommandCondition { sender, command ->
+    internal fun <S : CommandSender> conditionFor(
+        type: Class<S>,
+        block: (S, String?) -> Boolean,
+    ): CommandCondition =
+        CommandCondition { sender, command ->
             type.isInstance(sender) && block(type.cast(sender), command)
         }
-    }
 }

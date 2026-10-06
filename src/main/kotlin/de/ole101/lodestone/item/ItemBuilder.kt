@@ -10,19 +10,23 @@ import net.minestom.server.item.component.TooltipDisplay
 import net.minestom.server.tag.Tag
 import net.minestom.server.utils.Unit as MinestomUnit
 
-public fun item(material: Material, block: ItemBuilder.() -> Unit): ItemStack {
-    return ItemBuilder(material).apply(block).build()
-}
+public fun item(
+    material: Material,
+    block: ItemBuilder.() -> Unit,
+): ItemStack = ItemBuilder(material).apply(block).build()
 
-public fun <B : ItemBuilder> item(builder: B, block: B.() -> Unit): ItemStack {
-    return builder.apply(block).build()
-}
+public fun <B : ItemBuilder> item(
+    builder: B,
+    block: B.() -> Unit,
+): ItemStack = builder.apply(block).build()
 
 @DslMarker
 public annotation class ItemDsl
 
 @ItemDsl
-public open class ItemBuilder(material: Material) {
+public open class ItemBuilder(
+    material: Material,
+) {
     protected val builder: ItemStack.Builder = ItemStack.builder(material)
 
     protected fun Component.noItalic(): Component = decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE)
@@ -53,7 +57,10 @@ public open class ItemBuilder(material: Material) {
         builder.itemModel(model)
     }
 
-    public fun <T> data(component: DataComponent<T>, value: T) {
+    public fun <T> data(
+        component: DataComponent<T>,
+        value: T,
+    ) {
         builder.set(component, value)
     }
 
@@ -73,7 +80,10 @@ public open class ItemBuilder(material: Material) {
     }
 
     /** Stores [value] under [tag] in the item's custom data. */
-    public fun <T> tag(tag: Tag<T>, value: T) {
+    public fun <T> tag(
+        tag: Tag<T>,
+        value: T,
+    ) {
         builder.setTag(tag, value)
     }
 

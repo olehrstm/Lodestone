@@ -6,7 +6,10 @@ import net.minestom.server.inventory.InventoryType
  * The container a menu is shown in, with its slot grid of [columns] by [rows]. Slots are numbered row by row
  * from the top-left, starting at 0. Cell positions, pixel positions and the title follow the container GUI.
  */
-public enum class MenuType(public val columns: Int, public val rows: Int) {
+public enum class MenuType(
+    public val columns: Int,
+    public val rows: Int,
+) {
     CHEST_1(9, 1),
     CHEST_2(9, 2),
     CHEST_3(9, 3),
@@ -15,7 +18,8 @@ public enum class MenuType(public val columns: Int, public val rows: Int) {
     CHEST_6(9, 6),
 
     /** An anvil with its two input slots and the result slot as one row. */
-    ANVIL(3, 1);
+    ANVIL(3, 1),
+    ;
 
     /** The number of slots. */
     public val size: Int get() = columns * rows
@@ -44,12 +48,14 @@ internal val MenuType.titleLeft: Int
 internal val MenuType.guiHeight: Int
     get() = if (this == MenuType.ANVIL) 166 else 114 + rows * MenuMetrics.SLOT_SIZE
 
-internal fun MenuType.slotX(column: Int): Int =
-    if (this == MenuType.ANVIL) intArrayOf(26, 75, 133)[column] else MenuMetrics.cellX(column)
+internal fun MenuType.slotX(column: Int): Int = if (this == MenuType.ANVIL) intArrayOf(26, 75, 133)[column] else MenuMetrics.cellX(column)
 
 internal fun MenuType.slotY(row: Int): Int = if (this == MenuType.ANVIL) 46 else MenuMetrics.cellY(row)
 
-internal fun MenuType.slotIndex(column: Int, row: Int): Int {
+internal fun MenuType.slotIndex(
+    column: Int,
+    row: Int,
+): Int {
     require(column in 0 until columns) { "Column must be within 0..${columns - 1} for $this, but was $column" }
     require(row in 0 until rows) { "Row must be within 0..${rows - 1} for $this, but was $row" }
     return row * columns + column

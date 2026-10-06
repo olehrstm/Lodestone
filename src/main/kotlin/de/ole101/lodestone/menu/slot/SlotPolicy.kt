@@ -26,19 +26,35 @@ internal val SlotPolicy.canPlace: Boolean get() = this == SlotPolicy.PLACE || th
  * Returns whether [click] on a slot holding [slotItem] follows this policy. [cursor] is the item on the cursor,
  * [swapped] the hotbar or offhand item for swap clicks, and [accepts] decides which items may be placed.
  */
-internal fun SlotPolicy.allows(click: Click, slotItem: ItemStack, cursor: ItemStack, swapped: ItemStack, accepts: (ItemStack) -> Boolean): Boolean {
+internal fun SlotPolicy.allows(
+    click: Click,
+    slotItem: ItemStack,
+    cursor: ItemStack,
+    swapped: ItemStack,
+    accepts: (ItemStack) -> Boolean,
+): Boolean {
     fun placeable(item: ItemStack) = canPlace && accepts(item)
 
     return when (click) {
-        is Click.Left, is Click.Right -> when {
-            cursor.isAir -> canTake && !slotItem.isAir
-            slotItem.isAir || cursor.isSimilar(slotItem) -> placeable(cursor)
-            else -> canTake && placeable(cursor)
+        is Click.Right -> {
+            when {
+                cursor.isAir -> canTake && !slotItem.isAir
+                slotItem.isAir || cursor.isSimilar(slotItem) -> placeable(cursor)
+                else -> canTake && placeable(cursor)
+            }
         }
 
-        is Click.LeftShift, is Click.RightShift, is Click.DropSlot -> canTake
-        is Click.HotbarSwap, is Click.OffhandSwap -> (slotItem.isAir || canTake) && (swapped.isAir || placeable(swapped))
+        is Click.DropSlot -> {
+            canTake
+        }
+
+        is Click.OffhandSwap -> {
+            (slotItem.isAir || canTake) && (swapped.isAir || placeable(swapped))
+        }
+
         // Double clicks and drags involve several slots and are checked by the session; middle clicks are creative only
-        else -> false
+        else -> {
+            false
+        }
     }
 }

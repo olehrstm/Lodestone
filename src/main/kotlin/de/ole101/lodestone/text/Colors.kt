@@ -10,7 +10,6 @@ import java.util.*
  * them as `<!name>` tags through [LodestoneTags].
  */
 public object Colors {
-
     private val colors: MutableMap<String, TextColor> = LinkedHashMap()
 
     /**
@@ -183,11 +182,10 @@ public object Colors {
      * Matching ignores case and every character that is not a letter, so `Alice Blue`, `alice_blue`
      * and `aliceblue` all return [ALICE_BLUE].
      */
-    public fun named(name: String): TextColor? {
-        return this.colors[name.filter { it.isLetter() }.lowercase()]
-    }
+    public fun named(name: String): TextColor? = this.colors[name.filter { it.isLetter() }.lowercase()]
 
-    private fun register(name: String, value: Int): TextColor {
-        return TextColor.color(value).also { this.colors[name] = it }
-    }
+    private fun register(
+        name: String,
+        value: Int,
+    ): TextColor = TextColor.color(value).also { this.colors[name] = it }
 }

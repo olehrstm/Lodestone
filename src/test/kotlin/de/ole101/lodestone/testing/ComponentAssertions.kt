@@ -16,10 +16,11 @@ internal fun Component.texts(): String = ((this as? TextComponent)?.content() ?:
  *
  * Colors are reduced to their plain RGB form, so a named color compares equal to the same value written as hex.
  */
-internal fun Component.colors(): List<TextColor> = buildList {
-    color()?.let { add(TextColor.color(it.value())) }
-    children().forEach { addAll(it.colors()) }
-}
+internal fun Component.colors(): List<TextColor> =
+    buildList {
+        color()?.let { add(TextColor.color(it.value())) }
+        children().forEach { addAll(it.colors()) }
+    }
 
 /** Every font set on this component or one of its children, in depth-first order. */
 internal fun Component.fonts(): List<Key> = listOfNotNull(font()) + children().flatMap { it.fonts() }

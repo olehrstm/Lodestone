@@ -16,7 +16,7 @@ public fun <T> MenuScope.cycle(
     slot: Int,
     options: List<T>,
     initial: T = options.firstOrNull() ?: throw IllegalArgumentException("Cycle needs at least one option"),
-    display: (T) -> ItemStack
+    display: (T) -> ItemStack,
 ): Cycler<T> {
     require(options.isNotEmpty()) { "Cycle needs at least one option" }
     require(initial in options) { "Initial option $initial is not one of $options" }
@@ -26,8 +26,14 @@ public fun <T> MenuScope.cycle(
         item { display(cycler.selected) }
         onClick { click ->
             when (click.click) {
-                is Click.Left, is Click.LeftShift -> cycler.next()
-                is Click.Right, is Click.RightShift -> cycler.previous()
+                is Click.LeftShift -> {
+                    cycler.next()
+                }
+
+                is Click.RightShift -> {
+                    cycler.previous()
+                }
+
                 else -> {}
             }
         }
@@ -44,7 +50,10 @@ public fun <T> MenuScope.cycle(
 ): Cycler<T> = cycle(session.type.slotIndex(column, row), options, initial, display)
 
 /** The selection of a [cycle] slot. Reading [selected] in an effect or element tracks it. */
-public class Cycler<T> internal constructor(public val options: List<T>, private val index: State<Int>) {
+public class Cycler<T> internal constructor(
+    public val options: List<T>,
+    private val index: State<Int>,
+) {
     /** The selected option. Throws [IllegalArgumentException] when set to a value that is not one of [options]. */
     public var selected: T
         get() = options[index.value]

@@ -16,8 +16,10 @@ import net.minestom.server.item.Material
  * Throws [IllegalStateException] if [block] registers no confirmation handler. The block runs on the tick thread
  * during session creation, and its exceptions reach the caller.
  */
-public fun anvilInput(initial: String = "", block: AnvilInputScope.() -> Unit): MenuBlueprint<Unit> =
-    menu(MenuType.ANVIL) { anvilInput(initial, block) }
+public fun anvilInput(
+    initial: String = "",
+    block: AnvilInputScope.() -> Unit,
+): MenuBlueprint<Unit> = menu(MenuType.ANVIL) { anvilInput(initial, block) }
 
 /**
  * Configures this anvil's rename field with [initial] text, which [MenuSession.anvilInput] reports filtered and trimmed, a cancel action in slot 0, and confirmation in slot 2.
@@ -27,7 +29,10 @@ public fun anvilInput(initial: String = "", block: AnvilInputScope.() -> Unit): 
  * Throws [IllegalStateException] if this is not an anvil, input was already configured, or no confirmation handler
  * was registered. [block] runs during setup on the tick thread, and its exceptions reach the caller.
  */
-public fun MenuScope.anvilInput(initial: String = "", block: AnvilInputScope.() -> Unit) {
+public fun MenuScope.anvilInput(
+    initial: String = "",
+    block: AnvilInputScope.() -> Unit,
+) {
     check(session.type == MenuType.ANVIL) { "Anvil input requires ANVIL, but was ${session.type}" }
     val input = AnvilInputScope().apply(block)
     val confirm = checkNotNull(input.confirm) { "Anvil input needs an onConfirm handler" }

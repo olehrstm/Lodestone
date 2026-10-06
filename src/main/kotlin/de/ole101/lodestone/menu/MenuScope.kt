@@ -73,7 +73,10 @@ public class MenuScope internal constructor(
     }
 
     /** Shows the elements of [block] while [condition] returns true. The block is set up again each time it shows. */
-    public fun show(condition: () -> Boolean, block: MenuScope.() -> Unit) {
+    public fun show(
+        condition: () -> Boolean,
+        block: MenuScope.() -> Unit,
+    ) {
         key(condition) { shown -> if (shown) block() }
     }
 
@@ -81,7 +84,10 @@ public class MenuScope internal constructor(
      * Sets up [block] with the value [value] returns, and again from scratch whenever that value changes.
      * Everything the previous block created is removed first.
      */
-    public fun <K> key(value: () -> K, block: MenuScope.(K) -> Unit) {
+    public fun <K> key(
+        value: () -> K,
+        block: MenuScope.(K) -> Unit,
+    ) {
         val entry = Region.BlockEntry()
         region.entries += entry
         var mounted: Mounted? = null
@@ -107,7 +113,10 @@ public class MenuScope internal constructor(
      * Sets up [block] once for each item of the list [items] returns. When the list changes, blocks of items that
      * are still in it (compared with `==`) are kept, blocks of removed items are removed, and new items get a new block.
      */
-    public fun <T> each(items: () -> List<T>, block: MenuScope.(T) -> Unit) {
+    public fun <T> each(
+        items: () -> List<T>,
+        block: MenuScope.(T) -> Unit,
+    ) {
         val entry = Region.BlockEntry()
         region.entries += entry
         var mounted: List<Pair<T, Mounted>> = emptyList()
@@ -116,10 +125,11 @@ public class MenuScope internal constructor(
             val current = items()
             untrack {
                 val unused = mounted.toMutableList()
-                mounted = current.map { item ->
-                    val index = unused.indexOfFirst { it.first == item }
-                    if (index >= 0) unused.removeAt(index) else item to mount { block(item) }
-                }
+                mounted =
+                    current.map { item ->
+                        val index = unused.indexOfFirst { it.first == item }
+                        if (index >= 0) unused.removeAt(index) else item to mount { block(item) }
+                    }
                 unused.forEach { it.second.scope.dispose() }
                 entry.regions = mounted.map { it.second.region }
                 session.markDirty()
@@ -143,7 +153,11 @@ public class MenuScope internal constructor(
      * so `y = MenuMetrics.TITLE_Y + 2` moves it 2 pixels down. The title draws on top of all other text and glyphs.
      * Requires the GUI text shader for relative shadow markers. Colors use RGB332 precision and replace normal shadows.
      */
-    public fun title(align: TextAlign = TextAlign.LEFT, y: Int = MenuMetrics.TITLE_Y, text: () -> Component) {
+    public fun title(
+        align: TextAlign = TextAlign.LEFT,
+        y: Int = MenuMetrics.TITLE_Y,
+        text: () -> Component,
+    ) {
         element { title(text(), align, y) }
     }
 
@@ -200,7 +214,10 @@ public class MenuScope internal constructor(
         addHook(session.tickHooks, hook)
     }
 
-    private fun <H> addHook(hooks: MutableList<H>, hook: H) {
+    private fun <H> addHook(
+        hooks: MutableList<H>,
+        hook: H,
+    ) {
         hooks += hook
         reactive.onDispose { hooks -= hook }
     }
@@ -215,5 +232,8 @@ public class MenuScope internal constructor(
         return Mounted(child, childRegion)
     }
 
-    private class Mounted(val scope: ReactiveScope, val region: Region)
+    private class Mounted(
+        val scope: ReactiveScope,
+        val region: Region,
+    )
 }

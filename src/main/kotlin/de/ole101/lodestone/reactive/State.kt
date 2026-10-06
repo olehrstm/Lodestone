@@ -16,9 +16,16 @@ import kotlin.reflect.KProperty
 public sealed interface State<T> : ReadWriteProperty<Any?, T> {
     public var value: T
 
-    override fun getValue(thisRef: Any?, property: KProperty<*>): T = value
+    override fun getValue(
+        thisRef: Any?,
+        property: KProperty<*>,
+    ): T = value
 
-    override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+    override fun setValue(
+        thisRef: Any?,
+        property: KProperty<*>,
+        value: T,
+    ) {
         this.value = value
     }
 }
@@ -33,7 +40,10 @@ public sealed interface State<T> : ReadWriteProperty<Any?, T> {
 public sealed interface Derived<T> : ReadOnlyProperty<Any?, T> {
     public val value: T
 
-    override fun getValue(thisRef: Any?, property: KProperty<*>): T = value
+    override fun getValue(
+        thisRef: Any?,
+        property: KProperty<*>,
+    ): T = value
 }
 
 public fun <T> state(initial: T): State<T> = StateImpl(initial)

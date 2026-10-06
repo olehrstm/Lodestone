@@ -116,11 +116,12 @@ private fun MenuScope.button(
     val isPressed = state(false)
 
     element {
-        val shown = when {
-            isPressed.value -> pressed
-            !button.enabled() -> disabled
-            else -> glyph
-        }
+        val shown =
+            when {
+                isPressed.value -> pressed
+                !button.enabled() -> disabled
+                else -> glyph
+            }
         spanGlyph(shown, at)
         val tooltip = button.tooltip?.invoke()
         val hover = button.hover?.takeIf { button.enabled() }?.let { hoverSprite(it, at, tooltip) }

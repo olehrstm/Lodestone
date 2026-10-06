@@ -11,7 +11,10 @@ import kotlinx.coroutines.Job
 public fun <T> MenuScope.resource(fetch: suspend () -> T): Resource<T> = Resource(this, fetch).also { it.refetch() }
 
 /** The result of an async fetch in a menu. Reading its properties in an effect or element tracks them. */
-public class Resource<T> internal constructor(private val scope: MenuScope, private val fetch: suspend () -> T) {
+public class Resource<T> internal constructor(
+    private val scope: MenuScope,
+    private val fetch: suspend () -> T,
+) {
     private var job: Job? = null
 
     public var loading: Boolean by scope.state(false)
@@ -30,15 +33,16 @@ public class Resource<T> internal constructor(private val scope: MenuScope, priv
         job?.cancel()
         loading = true
         error = null
-        job = scope.launch {
-            try {
-                value = fetch()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                error = e
+        job =
+            scope.launch {
+                try {
+                    value = fetch()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    error = e
+                }
+                loading = false
             }
-            loading = false
-        }
     }
 }

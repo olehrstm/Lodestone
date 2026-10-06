@@ -6,7 +6,6 @@ import net.kyori.adventure.text.Component
 internal const val SPACE_KEY_PREFIX = "space."
 
 public object Space {
-
     /**
      * Font that [space] uses. Defaults to `lodestone:space`.
      */
@@ -22,4 +21,5 @@ public object Space {
  *
  * @see glyphOverlay
  */
-public fun space(pixels: Int): Component = if (pixels == 0) Component.empty() else Component.translatable("$SPACE_KEY_PREFIX$pixels").font(Space.font)
+public fun space(pixels: Int): Component =
+    if (pixels == 0) Component.empty() else Component.translatable("$SPACE_KEY_PREFIX$pixels").font(Space.font)

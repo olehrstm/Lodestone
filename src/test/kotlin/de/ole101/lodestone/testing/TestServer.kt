@@ -7,7 +7,6 @@ import net.minestom.server.MinecraftServer
  * `Minestom` dispatcher stays bound to the scheduler of the first one, so specs must not create a second.
  */
 internal object TestServer {
-
     private val server by lazy { MinecraftServer.init() }
 
     fun init() {

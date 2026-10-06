@@ -55,10 +55,11 @@ public class SignInput internal constructor(
     internal val onInput: (Player, String) -> Unit,
     private val onReplaced: (Player) -> Unit = {},
 ) {
-    private val signData: CompoundBinaryTag = CompoundBinaryTag.empty().put(
-        "front_text",
-        CompoundBinaryTag.empty().put("messages", ListBinaryTag.from(lines.map(StringBinaryTag::stringBinaryTag))),
-    )
+    private val signData: CompoundBinaryTag =
+        CompoundBinaryTag.empty().put(
+            "front_text",
+            CompoundBinaryTag.empty().put("messages", ListBinaryTag.from(lines.map(StringBinaryTag::stringBinaryTag))),
+        )
 
     init {
         require(lines.size == 4) { "Sign input needs exactly 4 lines, got ${lines.size}" }
@@ -86,17 +87,24 @@ public class SignInput internal constructor(
 
         // The client sends one edit for the replaced editor. If it was on this block, it must not count as input.
         var ignoreNext = previous?.position == position
-        val listener = EventListener.builder(PlayerEditSignEvent::class.java)
-            .filter { it.blockPosition == position }
-            .filter { !ignoreNext.also { ignoreNext = false } }
-            .expireCount(1)
-            .handler { event ->
-                player.removeTag(PENDING_TAG)
-                restore(player, event.instance, position)
+        val listener =
+            EventListener
+                .builder(PlayerEditSignEvent::class.java)
+                .filter { it.blockPosition == position }
+                .filter { !ignoreNext.also { ignoreNext = false } }
+                .expireCount(1)
+                .handler { event ->
+                    player.removeTag(PENDING_TAG)
+                    restore(player, event.instance, position)
 
-                onInput(player, event.lines.slice(inputLines).joinToString(" ").trim())
-            }
-            .build()
+                    onInput(
+                        player,
+                        event.lines
+                            .slice(inputLines)
+                            .joinToString(" ")
+                            .trim(),
+                    )
+                }.build()
 
         player.eventNode().addListener(listener)
         player.setTag(PENDING_TAG, Pending(position, listener, onReplaced))
@@ -117,7 +125,11 @@ private class Pending(
 
 private val PENDING_TAG: Tag<Pending> = Tag.Transient("lodestone:sign-input")
 
-private fun restore(player: Player, instance: Instance, position: BlockVec) {
+private fun restore(
+    player: Player,
+    instance: Instance,
+    position: BlockVec,
+) {
     val block = instance.getBlock(position)
     player.sendPacket(BlockChangePacket(position, block))
     val type = block.blockEntityType() ?: return

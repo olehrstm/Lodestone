@@ -35,9 +35,10 @@ fun main() {
         message.send(player)
         "<small>Hello 123!</small>".sendMini(player)
 
-        val input = signInput {
-            onInput { player, input -> player.sendMessage(input) }
-        }
+        val input =
+            signInput {
+                onInput { player, input -> player.sendMessage(input) }
+            }
         input.open(player)
     }
 

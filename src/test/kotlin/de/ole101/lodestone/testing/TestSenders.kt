@@ -7,7 +7,6 @@ import net.minestom.server.command.CommandSender
 import net.minestom.server.tag.TagHandler
 
 internal open class TestSender : CommandSender {
-
     val received: MutableList<Component> = mutableListOf()
 
     private val tagHandler = TagHandler.newHandler()

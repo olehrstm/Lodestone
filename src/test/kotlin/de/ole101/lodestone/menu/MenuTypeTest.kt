@@ -12,21 +12,21 @@ import io.kotest.matchers.collections.shouldContain
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.format.ShadowColor
 
-class MenuTypeTest : FunSpec({
+class MenuTypeTest :
+    FunSpec({
 
-    beforeSpec {
-        TestServer.init()
-        MinestomRegistries.bind()
-    }
+        beforeSpec {
+            TestServer.init()
+            MinestomRegistries.bind()
+        }
 
+        test("a glyph with a smaller ascent is moved up by the difference") {
+            val cap = Glyph(Key.key("test:ui"), 'a', 16, height = 2, ascent = 2)
+            val session = menu(rows = 1) { overlay(cap, px(0, 20)) }.create()
 
-    test("a glyph with a smaller ascent is moved up by the difference") {
-        val cap = Glyph(Key.key("test:ui"), 'a', 16, height = 2, ascent = 2)
-        val session = menu(rows = 1) { overlay(cap, px(0, 20)) }.create()
-
-        // 20 - 6 for the title line, - 5 for the ascent
-        session.inventory.title.fonts() shouldContain Key.key("test:ui")
-        session.inventory.title.shadows() shouldContain ShadowColor.shadowColor(0x4EB809FF)
-        session.dispose()
-    }
-})
+            // 20 - 6 for the title line, - 5 for the ascent
+            session.inventory.title.fonts() shouldContain Key.key("test:ui")
+            session.inventory.title.shadows() shouldContain ShadowColor.shadowColor(0x4EB809FF)
+            session.dispose()
+        }
+    })

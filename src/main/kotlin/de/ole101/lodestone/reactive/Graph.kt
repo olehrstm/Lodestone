@@ -90,7 +90,10 @@ internal abstract class Node {
     }
 }
 
-internal class StateImpl<T>(initial: T) : Node(), State<T> {
+internal class StateImpl<T>(
+    initial: T,
+) : Node(),
+    State<T> {
     private var current = initial
 
     override var value: T
@@ -103,10 +106,11 @@ internal class StateImpl<T>(initial: T) : Node(), State<T> {
 
             // Validate before mutating state or graph
             val affectedNodes = reachedObservers()
-            val affectedFlushers = affectedNodes
-                .filterIsInstance<EffectNode>()
-                .map { it.flusher }
-                .distinct()
+            val affectedFlushers =
+                affectedNodes
+                    .filterIsInstance<EffectNode>()
+                    .map { it.flusher }
+                    .distinct()
 
             for (flusher in affectedFlushers) {
                 flusher.checkWrite()
@@ -125,7 +129,10 @@ internal class StateImpl<T>(initial: T) : Node(), State<T> {
     override fun toString(): String = "State($current)"
 }
 
-internal class DerivedImpl<T>(private val compute: () -> T) : Node(), Derived<T> {
+internal class DerivedImpl<T>(
+    private val compute: () -> T,
+) : Node(),
+    Derived<T> {
     private var current: T? = null
     private var hasValue = false
 
@@ -144,12 +151,13 @@ internal class DerivedImpl<T>(private val compute: () -> T) : Node(), Derived<T>
         if (!needsUpdate()) return
 
         flag = Flag.CLEAN
-        val nextValue = try {
-            tracked(compute)
-        } catch (e: Throwable) {
-            flag = Flag.DIRTY
-            throw e
-        }
+        val nextValue =
+            try {
+                tracked(compute)
+            } catch (e: Throwable) {
+                flag = Flag.DIRTY
+                throw e
+            }
 
         if (disposed) flag = Flag.DIRTY
         if (!hasValue || nextValue != current) {
@@ -222,7 +230,9 @@ internal class EffectNode(
     override fun toString(): String = "${if (pre) "preEffect" else "effect"}(${block.javaClass.name})"
 }
 
-internal class Flusher(private val scheduler: FlushScheduler) {
+internal class Flusher(
+    private val scheduler: FlushScheduler,
+) {
     private val preEffects = TreeSet<EffectNode>(compareBy { it.id })
     private val effects = TreeSet<EffectNode>(compareBy { it.id })
     private var nextId = 0L
@@ -271,7 +281,7 @@ internal class Flusher(private val scheduler: FlushScheduler) {
                     val unsettledEffects = preEffects + effects
                     unsettledEffects.forEach(::remove)
                     throw IllegalStateException(
-                        "Effects still dirty after $MAX_ROUNDS flush rounds, they keep writing states they read: $unsettledEffects"
+                        "Effects still dirty after $MAX_ROUNDS flush rounds, they keep writing states they read: $unsettledEffects",
                     )
                 }
 

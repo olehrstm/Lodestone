@@ -23,12 +23,19 @@ import net.minestom.server.item.Material
  * Adds the slot at [index], configured by [block]. The block runs again whenever a state it read changes, for
  * example inside `item { }`. Throws [IllegalArgumentException] if [index] is outside the menu.
  */
-public fun MenuScope.slot(index: Int, block: SlotScope.() -> Unit) {
+public fun MenuScope.slot(
+    index: Int,
+    block: SlotScope.() -> Unit,
+) {
     session.type.checkSlot(index)
     element { slot(index, block) }
 }
 
-public fun MenuScope.slot(column: Int, row: Int, block: SlotScope.() -> Unit) {
+public fun MenuScope.slot(
+    column: Int,
+    row: Int,
+    block: SlotScope.() -> Unit,
+) {
     slot(session.type.slotIndex(column, row), block)
 }
 
@@ -39,7 +46,11 @@ public fun MenuScope.slot(column: Int, row: Int, block: SlotScope.() -> Unit) {
  *
  * @see RenderScope.playerSlot
  */
-public fun MenuScope.playerSlot(column: Int, row: Int, block: SlotScope.() -> Unit) {
+public fun MenuScope.playerSlot(
+    column: Int,
+    row: Int,
+    block: SlotScope.() -> Unit,
+) {
     requirePlayerSlot(column, row)
     element { playerSlot(column, row, block) }
 }
@@ -84,12 +95,20 @@ public fun MenuScope.rowOverlays(glyph: (row: Int) -> Glyph?) {
  *
  * @see de.ole101.lodestone.menu.render.RenderScope.text
  */
-public fun MenuScope.text(at: Position, align: TextAlign = TextAlign.LEFT, vAlign: VAlign = VAlign.TOP, text: () -> Component) {
+public fun MenuScope.text(
+    at: Position,
+    align: TextAlign = TextAlign.LEFT,
+    vAlign: VAlign = VAlign.TOP,
+    text: () -> Component,
+) {
     element { text(at, align, vAlign, text) }
 }
 
 /** Draws [glyph] centered over the cells [at], also vertically when the glyph has a height. */
-internal fun RenderScope.spanGlyph(glyph: Glyph, at: Position) {
+internal fun RenderScope.spanGlyph(
+    glyph: Glyph,
+    at: Position,
+) {
     glyph(glyph, at, TextAlign.CENTER, glyph.centeredVertically())
 }
 
@@ -102,7 +121,11 @@ internal fun RenderScope.spanGlyph(glyph: Glyph, at: Position) {
  * screen center plus 128, blue and the top 3 bits of alpha are the tooltip width, and the low 5 bits of alpha are the number
  * of tooltip lines. The shader draws the shadow at the target and cuts out the part behind the tooltip.
  */
-internal fun RenderScope.hoverSprite(glyph: Glyph, at: Position, tooltip: Component?): Component {
+internal fun RenderScope.hoverSprite(
+    glyph: Glyph,
+    at: Position,
+    tooltip: Component?,
+): Component {
     val (x, y) = glyphPosition(glyph, at, TextAlign.CENTER, glyph.centeredVertically())
     // The client centers the GUI on the screen, so its center is the screen center
     val dx = x - MenuMetrics.GUI_WIDTH / 2 + 128
@@ -115,34 +138,52 @@ internal fun RenderScope.hoverSprite(glyph: Glyph, at: Position, tooltip: Compon
 
     // Cancels the glyph's advance, so the tooltip text after it starts where the line starts
     val advance = requireNotNull(glyph.width) + 1
-    return Component.text()
+    return Component
+        .text()
         .append(glyph.asComponent().color(SHADER_HIDDEN_COLOR).shadowColor(shadow))
         .append(space(-advance))
         .build()
 }
 
-
 private fun Glyph.centeredVertically(): VAlign = if (height != null) VAlign.MIDDLE else VAlign.TOP
 
-internal fun MenuScope.spanSlots(columns: IntRange, row: Int): List<Int> {
+internal fun MenuScope.spanSlots(
+    columns: IntRange,
+    row: Int,
+): List<Int> {
     cell(columns, row)
     return columns.map { column -> session.type.slotIndex(column, row) }
 }
 
-internal fun invisibleItem(tooltip: Component?, hover: Component? = null): ItemStack = item(Material.PAPER) {
-    itemModel("minecraft:air")
-    when {
-        hover != null -> {
-            customName(Component.text().append(hover).append(tooltip ?: Component.empty()).build())
-            // A tooltip that only carries the hover sprite draws no box, with the pack's transparent tooltip style
-            val style = MenuFonts.hoverTooltipStyle
-            if (tooltip == null && style != null) data(DataComponents.TOOLTIP_STYLE, style)
-        }
+internal fun invisibleItem(
+    tooltip: Component?,
+    hover: Component? = null,
+): ItemStack =
+    item(Material.PAPER) {
+        itemModel("minecraft:air")
+        when {
+            hover != null -> {
+                customName(
+                    Component
+                        .text()
+                        .append(hover)
+                        .append(tooltip ?: Component.empty())
+                        .build(),
+                )
+                // A tooltip that only carries the hover sprite draws no box, with the pack's transparent tooltip style
+                val style = MenuFonts.hoverTooltipStyle
+                if (tooltip == null && style != null) data(DataComponents.TOOLTIP_STYLE, style)
+            }
 
-        tooltip != null -> customName(tooltip)
-        else -> noTooltip()
+            tooltip != null -> {
+                customName(tooltip)
+            }
+
+            else -> {
+                noTooltip()
+            }
+        }
     }
-}
 
 internal fun requireWidth(glyph: Glyph) {
     requireNotNull(glyph.width) { "Glyph needs a width to be drawn in a menu, but $glyph has none" }

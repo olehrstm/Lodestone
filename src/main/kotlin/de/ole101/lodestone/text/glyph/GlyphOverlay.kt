@@ -21,20 +21,29 @@ import net.kyori.adventure.text.format.TextColor
  *
  * @see space
  */
-public fun glyphOverlay(shiftedFonts: ShiftedFonts = ShiftedFonts.None, block: GlyphOverlayBuilder.() -> Unit): Component = GlyphOverlayBuilder(shiftedFonts).apply(block).build()
+public fun glyphOverlay(
+    shiftedFonts: ShiftedFonts = ShiftedFonts.None,
+    block: GlyphOverlayBuilder.() -> Unit,
+): Component = GlyphOverlayBuilder(shiftedFonts).apply(block).build()
 
 @DslMarker
 public annotation class GlyphOverlayDsl
 
 @GlyphOverlayDsl
-public class GlyphOverlayBuilder internal constructor(private val shiftedFonts: ShiftedFonts) {
+public class GlyphOverlayBuilder internal constructor(
+    private val shiftedFonts: ShiftedFonts,
+) {
     private val items = mutableListOf<Item>()
 
     /**
      * Places [glyph] with its left edge at [x], shifted [y] pixels down.
      * Throws [IllegalArgumentException] if the glyph has no [Glyph.width].
      */
-    public fun glyph(glyph: Glyph, x: Int, y: Int = 0) {
+    public fun glyph(
+        glyph: Glyph,
+        x: Int,
+        y: Int = 0,
+    ) {
         add(glyph, glyph.asComponent(), x, y)
     }
 
@@ -43,39 +52,68 @@ public class GlyphOverlayBuilder internal constructor(private val shiftedFonts: 
      * texture as it is, for example in a menu title, which is dark gray by default.
      * Throws [IllegalArgumentException] if the glyph has no [Glyph.width].
      */
-    public fun glyph(glyph: Glyph, x: Int, y: Int, color: TextColor) {
+    public fun glyph(
+        glyph: Glyph,
+        x: Int,
+        y: Int,
+        color: TextColor,
+    ) {
         add(glyph, glyph.asComponent().color(color), x, y)
     }
 
-    private fun add(glyph: Glyph, component: Component, x: Int, y: Int) {
+    private fun add(
+        glyph: Glyph,
+        component: Component,
+        x: Int,
+        y: Int,
+    ) {
         val width = requireNotNull(glyph.width) { "Glyph needs a width to be placed, but $glyph has none" }
         add(x, width + 1, component, y)
     }
 
     /** Draws the glyph's shadow as a sprite positioned by the GUI text shader, hiding its foreground. */
-    internal fun shaderGlyph(glyph: Glyph, x: Int, y: Int, color: TextColor) {
-        val component = glyph.asComponent()
-            .color(SHADER_HIDDEN_COLOR)
-            .shadowColor(buildRelativeShadowMarker(y, color))
+    internal fun shaderGlyph(
+        glyph: Glyph,
+        x: Int,
+        y: Int,
+        color: TextColor,
+    ) {
+        val component =
+            glyph
+                .asComponent()
+                .color(SHADER_HIDDEN_COLOR)
+                .shadowColor(buildRelativeShadowMarker(y, color))
         add(glyph, component, x, 0)
     }
 
     /** Positions text using shadow markers while retaining its font, decorations, and inherited tint. */
-    internal fun shaderText(text: Component, x: Int, y: Int, align: TextAlign) {
+    internal fun shaderText(
+        text: Component,
+        x: Int,
+        y: Int,
+        align: TextAlign,
+    ) {
         val advance = text.pixelWidth()
         add(x - align.anchor(advance), advance, text.withRelativeShadow(y, TITLE_COLOR), 0)
     }
 
-    private fun Component.withRelativeShadow(y: Int, inheritedColor: TextColor): Component {
+    private fun Component.withRelativeShadow(
+        y: Int,
+        inheritedColor: TextColor,
+    ): Component {
         val tint = color() ?: inheritedColor
-        var marked = color(SHADER_HIDDEN_COLOR)
-            .shadowColor(buildRelativeShadowMarker(y, tint))
-            .children(children().map { it.withRelativeShadow(y, tint) })
+        var marked =
+            color(SHADER_HIDDEN_COLOR)
+                .shadowColor(buildRelativeShadowMarker(y, tint))
+                .children(children().map { it.withRelativeShadow(y, tint) })
         if (marked is TranslatableComponent && this is TranslatableComponent) {
-            marked = marked.arguments(arguments().map { argument ->
-                val value = argument.value()
-                if (value is Component) value.withRelativeShadow(y, tint) else argument
-            })
+            marked =
+                marked.arguments(
+                    arguments().map { argument ->
+                        val value = argument.value()
+                        if (value is Component) value.withRelativeShadow(y, tint) else argument
+                    },
+                )
         }
         return marked
     }
@@ -84,19 +122,32 @@ public class GlyphOverlayBuilder internal constructor(private val shiftedFonts: 
      * Places [text] so that [x] is its left edge, center or right edge, depending on [align], shifted [y] pixels
      * down. The text is measured with [pixelWidth], so it should use the default font.
      */
-    public fun text(text: Component, x: Int, y: Int = 0, align: TextAlign = TextAlign.LEFT) {
+    public fun text(
+        text: Component,
+        x: Int,
+        y: Int = 0,
+        align: TextAlign = TextAlign.LEFT,
+    ) {
         val advance = text.pixelWidth()
         add(x - align.anchor(advance), advance, text, y)
     }
 
-    private fun add(start: Int, advance: Int, component: Component, y: Int) {
+    private fun add(
+        start: Int,
+        advance: Int,
+        component: Component,
+        y: Int,
+    ) {
         val shifted = if (y == 0) component else component.shiftedDown(y, isRoot = true)
         items += Item(start, advance, shifted)
     }
 
     // The root gets a shifted font even without its own font, descendants only when they set one,
     // everything else inherits it.
-    private fun Component.shiftedDown(y: Int, isRoot: Boolean): Component {
+    private fun Component.shiftedDown(
+        y: Int,
+        isRoot: Boolean,
+    ): Component {
         val own = font()
         val refonted = if (own != null || isRoot) font(shiftedFonts.font(own ?: DEFAULT_FONT, y)) else this
         return refonted.children(children().map { it.shiftedDown(y, isRoot = false) })
@@ -114,7 +165,11 @@ public class GlyphOverlayBuilder internal constructor(private val shiftedFonts: 
         return line.append(space(-cursor)).build()
     }
 
-    private class Item(val start: Int, val advance: Int, val component: Component)
+    private class Item(
+        val start: Int,
+        val advance: Int,
+        val component: Component,
+    )
 
     private companion object {
         val DEFAULT_FONT: Key = Key.key("minecraft:default")
@@ -124,11 +179,12 @@ public class GlyphOverlayBuilder internal constructor(private val shiftedFonts: 
 public enum class TextAlign {
     LEFT,
     CENTER,
-    RIGHT
+    RIGHT,
 }
 
-internal fun TextAlign.anchor(width: Int): Int = when (this) {
-    TextAlign.LEFT -> 0
-    TextAlign.CENTER -> width / 2
-    TextAlign.RIGHT -> width
-}
+internal fun TextAlign.anchor(width: Int): Int =
+    when (this) {
+        TextAlign.LEFT -> 0
+        TextAlign.CENTER -> width / 2
+        TextAlign.RIGHT -> width
+    }

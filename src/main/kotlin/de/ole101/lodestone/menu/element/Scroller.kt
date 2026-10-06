@@ -13,7 +13,12 @@ import de.ole101.lodestone.reactive.State
  * bottom. Returns the [Scroller] that moves the lines. Throws [IllegalArgumentException] if [area] reaches outside
  * the menu.
  */
-public fun <T> MenuScope.scroll(items: () -> List<T>, area: SlotArea, axis: Axis = Axis.VERTICAL, content: SlotScope.(T) -> Unit): Scroller {
+public fun <T> MenuScope.scroll(
+    items: () -> List<T>,
+    area: SlotArea,
+    axis: Axis = Axis.VERTICAL,
+    content: SlotScope.(T) -> Unit,
+): Scroller {
     val all = derived(items)
     val areaSlots = area.slotsIn(session.type)
     val columns = area.columns.count()
@@ -36,7 +41,10 @@ public fun <T> MenuScope.scroll(items: () -> List<T>, area: SlotArea, axis: Axis
 }
 
 /** The scroll state of a [scroll] element. Reading its properties in an effect or element tracks them. */
-public class Scroller internal constructor(private val current: State<Int>, private val maxOffset: Derived<Int>) {
+public class Scroller internal constructor(
+    private val current: State<Int>,
+    private val maxOffset: Derived<Int>,
+) {
     /** The number of lines scrolled past, within `0..max`. */
     public val offset: Int get() = current.value.coerceIn(0, max)
 

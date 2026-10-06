@@ -23,18 +23,19 @@ public fun interface FlushScheduler {
          * [IllegalStateException]. States have no locks: with `minestom.dispatcher-threads` above 1,
          * do not share state between players in different chunks.
          */
-        public val EndOfTick: FlushScheduler = object : FlushScheduler {
-            override fun schedule(flush: Runnable) {
-                schedulerManager.scheduleEndOfTick(flush)
-            }
+        public val EndOfTick: FlushScheduler =
+            object : FlushScheduler {
+                override fun schedule(flush: Runnable) {
+                    schedulerManager.scheduleEndOfTick(flush)
+                }
 
-            override fun checkWrite() {
-                val thread = Thread.currentThread()
-                check(!MinecraftServer.isStarted() || thread is TickSchedulerThread || thread is TickThread) {
-                    "A state write reached an effect on thread ${thread.name}. Write states only on the tick thread, " +
+                override fun checkWrite() {
+                    val thread = Thread.currentThread()
+                    check(!MinecraftServer.isStarted() || thread is TickSchedulerThread || thread is TickThread) {
+                        "A state write reached an effect on thread ${thread.name}. Write states only on the tick thread, " +
                             "e.g. from an event listener or the Minestom coroutine dispatcher."
+                    }
                 }
             }
-        }
     }
 }

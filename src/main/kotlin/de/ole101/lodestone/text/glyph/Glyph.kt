@@ -18,29 +18,31 @@ import net.kyori.adventure.text.ComponentLike
  * that must use a smaller ascent, and menus move them up by the difference.
  * Throws [IllegalArgumentException] if [width] or [height] is negative, or [ascent] is above [height].
  */
-public class Glyph @JvmOverloads constructor(
-    public val font: Key,
-    public val char: Char,
-    public val width: Int? = null,
-    public val height: Int? = null,
-    public val ascent: Int = DEFAULT_ASCENT,
-) : ComponentLike {
+public class Glyph
+    @JvmOverloads
+    constructor(
+        public val font: Key,
+        public val char: Char,
+        public val width: Int? = null,
+        public val height: Int? = null,
+        public val ascent: Int = DEFAULT_ASCENT,
+    ) : ComponentLike {
+        init {
+            require(width == null || width >= 0) { "Glyph width must not be negative, but was $width" }
+            require(height == null || height >= 0) { "Glyph height must not be negative, but was $height" }
+            require(height == null || ascent <= height) { "Glyph ascent must not be above its height $height, but was $ascent" }
+        }
 
-    init {
-        require(width == null || width >= 0) { "Glyph width must not be negative, but was $width" }
-        require(height == null || height >= 0) { "Glyph height must not be negative, but was $height" }
-        require(height == null || ascent <= height) { "Glyph ascent must not be above its height $height, but was $ascent" }
+        override fun asComponent(): Component = Component.text(char).font(font)
+
+        /** Returns this glyph as a MiniMessage string using the [font] tag. */
+        public fun asMini(): String = "<font:${font.asString()}>${MiniMessageProvider.escapeTags(char.toString())}</font>"
+
+        override fun toString(): String =
+            "Glyph(font=${font.asString()}, char=U+%04X, width=$width, height=$height, ascent=$ascent)".format(char.code)
+
+        public companion object {
+            /** The ascent of the default font, where the top of a glyph lines up with default-font text. */
+            public const val DEFAULT_ASCENT: Int = 7
+        }
     }
-
-    override fun asComponent(): Component = Component.text(char).font(font)
-
-    /** Returns this glyph as a MiniMessage string using the [font] tag. */
-    public fun asMini(): String = "<font:${font.asString()}>${MiniMessageProvider.escapeTags(char.toString())}</font>"
-
-    override fun toString(): String = "Glyph(font=${font.asString()}, char=U+%04X, width=$width, height=$height, ascent=$ascent)".format(char.code)
-
-    public companion object {
-        /** The ascent of the default font, where the top of a glyph lines up with default-font text. */
-        public const val DEFAULT_ASCENT: Int = 7
-    }
-}

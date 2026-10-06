@@ -7,16 +7,17 @@ import io.kotest.matchers.string.shouldContain
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 
-class GlyphTest : FunSpec({
+class GlyphTest :
+    FunSpec({
 
-    test("renders the character in the glyph font") {
-        val font = Key.key("lodestone:interface")
+        test("renders the character in the glyph font") {
+            val font = Key.key("lodestone:interface")
 
-        Glyph(font, '\uE000').asComponent() shouldBe Component.text('\uE000').font(font)
-    }
+            Glyph(font, '\uE000').asComponent() shouldBe Component.text('\uE000').font(font)
+        }
 
-    test("rejects a negative width or height") {
-        shouldThrow<IllegalArgumentException> { Glyph(Key.key("lodestone:gui"), '\uE000', -1) }.message shouldContain "-1"
-        shouldThrow<IllegalArgumentException> { Glyph(Key.key("lodestone:gui"), '\uE000', 1, -2) }.message shouldContain "-2"
-    }
-})
+        test("rejects a negative width or height") {
+            shouldThrow<IllegalArgumentException> { Glyph(Key.key("lodestone:gui"), '\uE000', -1) }.message shouldContain "-1"
+            shouldThrow<IllegalArgumentException> { Glyph(Key.key("lodestone:gui"), '\uE000', 1, -2) }.message shouldContain "-2"
+        }
+    })

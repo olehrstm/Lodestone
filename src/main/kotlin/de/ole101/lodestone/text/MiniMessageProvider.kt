@@ -20,7 +20,6 @@ public val LodestoneTags: TagResolver = TagResolver.resolver(ColorTag(), SmallCa
  * It always supports the standard tags and [LodestoneTags]. Call [configure] to add more.
  */
 public object MiniMessageProvider {
-
     @Volatile
     public var instance: MiniMessage = build(TagResolver.empty())
         private set
@@ -35,17 +34,13 @@ public object MiniMessageProvider {
         this.instance = build(extra)
     }
 
-    public fun parse(message: String): Component {
-        return this.instance.deserialize(message)
-    }
+    public fun parse(message: String): Component = this.instance.deserialize(message)
 
-    public fun escapeTags(message: String): String {
-        return this.instance.escapeTags(message)
-    }
+    public fun escapeTags(message: String): String = this.instance.escapeTags(message)
 
-    private fun build(extra: TagResolver): MiniMessage {
-        return MiniMessage.builder()
+    private fun build(extra: TagResolver): MiniMessage =
+        MiniMessage
+            .builder()
             .tags(TagResolver.resolver(TagResolver.standard(), LodestoneTags, extra))
             .build()
-    }
 }

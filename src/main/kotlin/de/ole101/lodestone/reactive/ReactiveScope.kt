@@ -112,7 +112,10 @@ public class ReactiveScope internal constructor(
         flusher.afterFlush += block
     }
 
-    private fun addEffect(block: EffectScope.() -> Unit, pre: Boolean) {
+    private fun addEffect(
+        block: EffectScope.() -> Unit,
+        pre: Boolean,
+    ) {
         checkNotDisposed()
 
         val effect = EffectNode(block, pre, flusher.nextId(), flusher)
