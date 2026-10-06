@@ -53,6 +53,7 @@ public class SignInput internal constructor(
     public val lines: List<String>,
     public val inputLines: IntRange,
     internal val onInput: (Player, String) -> Unit,
+    private val onReplaced: (Player) -> Unit = {},
 ) {
     private val signData: CompoundBinaryTag = CompoundBinaryTag.empty().put(
         "front_text",
@@ -78,6 +79,7 @@ public class SignInput internal constructor(
         if (previous != null) {
             player.eventNode().removeListener(previous.listener)
             restore(player, instance, previous.position)
+            previous.onReplaced(player)
         }
 
         val position = player.position.asBlockVec().add(0, 5, 0)
@@ -97,7 +99,7 @@ public class SignInput internal constructor(
             .build()
 
         player.eventNode().addListener(listener)
-        player.setTag(PENDING_TAG, Pending(position, listener))
+        player.setTag(PENDING_TAG, Pending(position, listener, onReplaced))
 
         player.sendPackets(
             BlockChangePacket(position, Block.OAK_SIGN),
@@ -107,7 +109,11 @@ public class SignInput internal constructor(
     }
 }
 
-private class Pending(val position: BlockVec, val listener: EventListener<PlayerEditSignEvent>)
+private class Pending(
+    val position: BlockVec,
+    val listener: EventListener<PlayerEditSignEvent>,
+    val onReplaced: (Player) -> Unit,
+)
 
 private val PENDING_TAG: Tag<Pending> = Tag.Transient("lodestone:sign-input")
 

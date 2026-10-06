@@ -18,13 +18,19 @@ import net.minestom.server.entity.Player
 public fun MenuSession.promptSign(player: Player, block: SignInputBuilder.() -> Unit) {
     val input = SignInputBuilder().apply(block).build()
     val token = beginPrompt(player)
-    val sign = SignInput(input.lines, input.inputLines) { signPlayer, text ->
-        try {
-            input.onInput(signPlayer, text)
-        } finally {
-            endPrompt(player, token)
-        }
-    }
+    val sign = SignInput(
+        input.lines,
+        input.inputLines,
+        onInput = { signPlayer, text ->
+            try {
+                input.onInput(signPlayer, text)
+            } finally {
+                endPrompt(player, token)
+            }
+        },
+        // Another sign replaced this one, so its handler never runs and the player does not come back
+        onReplaced = { abandonPrompt(player, token) },
+    )
     try {
         sign.open(player)
     } catch (e: Throwable) {

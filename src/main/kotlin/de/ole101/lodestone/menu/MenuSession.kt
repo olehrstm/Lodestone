@@ -200,6 +200,11 @@ public class MenuSession internal constructor(
         return token
     }
 
+    /** Ends the prompt with [token] without opening this session again, because the player left it for good. */
+    internal fun abandonPrompt(player: Player, token: Any) {
+        if (prompts.remove(player, token)) release(player)
+    }
+
     /**
      * Ends the prompt with [token] and opens this session for [player] again, unless a newer prompt started, the
      * player went offline, or something else opened an inventory for them in the meantime.
