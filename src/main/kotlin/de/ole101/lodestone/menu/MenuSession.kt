@@ -23,6 +23,7 @@ import net.minestom.server.entity.Player
 import net.minestom.server.event.inventory.InventoryCloseEvent
 import net.minestom.server.event.inventory.InventoryItemChangeEvent
 import net.minestom.server.event.inventory.InventoryPreClickEvent
+import net.minestom.server.event.player.PlayerDisconnectEvent
 import net.minestom.server.inventory.Inventory
 import net.minestom.server.inventory.click.Click
 import net.minestom.server.item.ItemStack
@@ -96,6 +97,7 @@ public class MenuSession internal constructor(
             removeViewer(event.player, reason)
         }
         listen<InventoryItemChangeEvent>(node, ::handleChange)
+        listen<PlayerDisconnectEvent>(node) { event -> returnItemsOf(event.player) }
         reactive.afterFlush(::commit)
 
         try {
@@ -440,17 +442,17 @@ public class MenuSession internal constructor(
         owners.filterValues { it == player }.keys.forEach(::returnItem)
     }
 
-    // Gives the item in slot to the player who put it there. Offline players cannot get it back, so it stays.
+    // Gives the item in slot to the player who put it there. A player who left still gets it into their inventory,
+    // and only an online player can drop what does not fit.
     private fun returnItem(slot: Int) {
         val owner = owners[slot] ?: return
-        if (!owner.isOnline) return
         owners -= slot
 
         val item = inventory.getItemStack(slot)
         if (item.isAir) return
         withoutChangeEvents { inventory.setItemStack(slot, ItemStack.AIR) }
         contentsVersion.value++
-        if (!owner.inventory.addItemStack(item)) owner.dropItem(item)
+        if (!owner.inventory.addItemStack(item) && owner.isOnline) owner.dropItem(item)
     }
 
     // Changes made by the menu itself are not reported to onChange handlers
