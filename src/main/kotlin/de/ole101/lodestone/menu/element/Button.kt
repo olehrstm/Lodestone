@@ -58,6 +58,7 @@ public fun MenuScope.button(
 ) {
     val slots = spanSlots(columns, row)
     require(!cooldown.isNegative()) { "Cooldown must not be negative, but was $cooldown" }
+    for (shown in listOf(glyph, pressed, disabled)) requireWidth(shown)
     val button = ButtonScope(session).apply(block)
     val isPressed = state(false)
 
@@ -116,7 +117,7 @@ public class ButtonScope internal constructor(
      * With no [tooltip], [MenuFonts.hoverTooltipStyle] hides the tooltip box.
      */
     public fun hover(glyph: Glyph) {
-        requireNotNull(glyph.width) { "Glyph needs a width to be drawn in a menu, but $glyph has none" }
+        requireWidth(glyph)
         hover = glyph
     }
 

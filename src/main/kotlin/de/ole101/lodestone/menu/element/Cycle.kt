@@ -12,7 +12,12 @@ import net.minestom.server.item.ItemStack
  * selected option and is called again when a state it read changes. Returns the [Cycler] that holds the selection.
  * Throws [IllegalArgumentException] if [options] is empty, [initial] is not one of them, or [slot] is outside the menu.
  */
-public fun <T> MenuScope.cycle(slot: Int, options: List<T>, initial: T = options.first(), display: (T) -> ItemStack): Cycler<T> {
+public fun <T> MenuScope.cycle(
+    slot: Int,
+    options: List<T>,
+    initial: T = options.firstOrNull() ?: throw IllegalArgumentException("Cycle needs at least one option"),
+    display: (T) -> ItemStack
+): Cycler<T> {
     require(options.isNotEmpty()) { "Cycle needs at least one option" }
     require(initial in options) { "Initial option $initial is not one of $options" }
     val cycler = Cycler(options.toList(), state(options.indexOf(initial)))
@@ -34,7 +39,7 @@ public fun <T> MenuScope.cycle(
     column: Int,
     row: Int,
     options: List<T>,
-    initial: T = options.first(),
+    initial: T = options.firstOrNull() ?: throw IllegalArgumentException("Cycle needs at least one option"),
     display: (T) -> ItemStack,
 ): Cycler<T> = cycle(session.type.slotIndex(column, row), options, initial, display)
 

@@ -14,6 +14,7 @@ import de.ole101.lodestone.testing.TestServer
 import de.ole101.lodestone.testing.fakePlayer
 import de.ole101.lodestone.testing.texts
 import de.ole101.lodestone.text.glyph.Glyph
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
@@ -199,5 +200,13 @@ class ElementsTest : FunSpec({
         schedulerManager.processTick()
         resource.value shouldBe 2
         session.dispose()
+    }
+
+    test("invalid element arguments are rejected at setup") {
+        val noWidth = Glyph(Key.key("test:ui"), 'a')
+        val glyph = Glyph(Key.key("test:ui"), 'b', 16)
+        shouldThrow<IllegalArgumentException> { menu(rows = 1) { cycle(0, emptyList<Int>()) { ItemStack.AIR } }.create() }
+        shouldThrow<IllegalArgumentException> { menu(rows = 1) { button(0, glyph, noWidth) {} }.create() }
+        shouldThrow<IllegalArgumentException> { menu(rows = 1) { tabs(0) { tab(0, 0, noWidth) } }.create() }
     }
 })

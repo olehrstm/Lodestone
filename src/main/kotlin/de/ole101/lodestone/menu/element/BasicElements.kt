@@ -46,7 +46,7 @@ public fun MenuScope.overlay(
     vAlign: VAlign = VAlign.TOP,
     color: TextColor = NamedTextColor.WHITE,
 ) {
-    requireNotNull(glyph.width) { "Glyph needs a width to be drawn in a menu, but $glyph has none" }
+    requireWidth(glyph)
     require(vAlign == VAlign.TOP || glyph.height != null) { "Glyph needs a height to be aligned $vAlign, but $glyph has none" }
     element { glyph(glyph, at, align, vAlign, color) }
 }
@@ -129,4 +129,8 @@ internal fun invisibleItem(tooltip: Component?, hover: Component? = null): ItemS
         tooltip != null -> customName(tooltip)
         else -> noTooltip()
     }
+}
+
+internal fun requireWidth(glyph: Glyph) {
+    requireNotNull(glyph.width) { "Glyph needs a width to be drawn in a menu, but $glyph has none" }
 }
