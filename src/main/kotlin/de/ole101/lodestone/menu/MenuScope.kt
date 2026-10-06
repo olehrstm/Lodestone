@@ -56,11 +56,13 @@ public class MenuScope internal constructor(
             scope.render()
             entry.slots = scope.slots
             entry.layers = scope.layers
+            entry.playerSlots = scope.playerSlots
             session.markDirty()
 
             onCleanup {
                 entry.slots = emptyMap()
                 entry.layers = emptyList()
+                entry.playerSlots = emptyMap()
                 session.markDirty()
             }
         }
@@ -157,7 +159,10 @@ public class MenuScope internal constructor(
         addHook(session.closeHooks, hook)
     }
 
-    /** Runs [hook] for every click on a menu slot, before the slot's own handler. It may change [ClickContext.isCancelled]. */
+    /**
+     * Runs [hook] for every click on a menu slot, before the slot's own handler. It may change
+     * [ClickContext.isCancelled]. Drags and double clicks involve several slots and reach no hook.
+     */
     public fun onClick(hook: (ClickContext) -> Unit) {
         addHook(session.clickHooks, hook)
     }

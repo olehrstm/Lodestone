@@ -63,3 +63,10 @@ internal fun MenuType.cellOf(slot: Int): Pair<Int, Int> {
 internal fun MenuType.checkSlot(slot: Int) {
     require(slot in 0 until size) { "Slot must be within 0..${size - 1} for $this, but was $slot" }
 }
+
+/** Returns the y of the top edge of the slot square in [row] of the player inventory, where row 3 is the hotbar. */
+internal fun MenuType.playerSlotY(row: Int): Int {
+    val mainTop = if (this == MenuType.ANVIL) 83 else rows * MenuMetrics.SLOT_SIZE + 30
+    // The hotbar sits 4 pixels below the main inventory
+    return mainTop + row * MenuMetrics.SLOT_SIZE + if (row == 3) 4 else 0
+}

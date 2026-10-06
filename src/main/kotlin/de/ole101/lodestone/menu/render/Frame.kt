@@ -18,7 +18,12 @@ internal sealed interface TitleLayer {
     data class TextLayer(val text: Component, override val x: Int, override val y: Int, val align: TextAlign, val onTop: Boolean = false) : TitleLayer
 }
 
-internal class Frame(val slots: Map<Int, SlotView>, val layers: List<TitleLayer>) {
+internal class Frame(
+    val slots: Map<Int, SlotView>,
+    val layers: List<TitleLayer>,
+    // Slots of the viewer's own inventory, by row-major index with the hotbar as row 3
+    val playerSlots: Map<Int, SlotView> = emptyMap(),
+) {
 
     fun title(type: MenuType): Component = glyphOverlay {
         for (layer in layers) {
@@ -46,6 +51,7 @@ internal class Region {
     class ElementEntry : Entry {
         var slots: Map<Int, SlotView> = emptyMap()
         var layers: List<TitleLayer> = emptyList()
+        var playerSlots: Map<Int, SlotView> = emptyMap()
     }
 
     class BlockEntry : Entry {
@@ -56,6 +62,7 @@ internal class Region {
     fun frame(): Frame {
         val slots = HashMap<Int, SlotView>()
         val layers = mutableListOf<TitleLayer>()
+        val playerSlots = HashMap<Int, SlotView>()
 
         fun collect(region: Region) {
             for (entry in region.entries) {
@@ -63,6 +70,7 @@ internal class Region {
                     is ElementEntry -> {
                         slots += entry.slots
                         layers += entry.layers
+                        playerSlots += entry.playerSlots
                     }
 
                     is BlockEntry -> entry.regions.forEach(::collect)
@@ -72,6 +80,6 @@ internal class Region {
 
         collect(this)
         val (top, rest) = layers.partition { it is TitleLayer.TextLayer && it.onTop }
-        return Frame(slots, rest + top)
+        return Frame(slots, rest + top, playerSlots)
     }
 }

@@ -26,9 +26,13 @@ import net.minestom.server.event.inventory.InventoryPreClickEvent
 import net.minestom.server.event.player.PlayerAnvilInputEvent
 import net.minestom.server.event.player.PlayerDisconnectEvent
 import net.minestom.server.inventory.Inventory
+import net.minestom.server.inventory.PlayerInventory
 import net.minestom.server.inventory.click.Click
 import net.minestom.server.item.ItemStack
+import net.minestom.server.network.packet.server.play.WindowItemsPacket
+import net.minestom.server.tag.Tag
 import net.minestom.server.timer.TaskSchedule
+import net.minestom.server.utils.inventory.PlayerInventoryUtils
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -211,6 +215,7 @@ public class MenuSession internal constructor(
         if (!player.openInventory(inventory)) return false
 
         viewers = currentViewers + player
+        if (frame.playerSlots.isNotEmpty()) showPlayerSlots(player)
         openHooks.forEach { hook -> safely { hook(player) } }
         return true
     }
@@ -336,6 +341,9 @@ public class MenuSession internal constructor(
                 if (item != (previous.slots[slot]?.item ?: ItemStack.AIR)) inventory.setItemStack(slot, item)
             }
         }
+        if (frame.playerSlots.mapValues { it.value.item } != previous.playerSlots.mapValues { it.value.item }) {
+            currentViewers.forEach(::showPlayerSlots)
+        }
         // The client resets the anvil text to the name of slot 0 when it changes or the window reopens
         if (frame.slots[0]?.item != previous.slots[0]?.item) seedAnvilInput()
         if (frame.layers != previous.layers) safely {
@@ -362,6 +370,7 @@ public class MenuSession internal constructor(
 
         viewers = currentViewers - player
         lastClicks -= player.uuid
+        restorePlayerSlots(player)
         if (reason != CloseReason.NAVIGATED) {
             returnItemsOf(player)
             backs.remove(player)?.release(player)
@@ -372,6 +381,8 @@ public class MenuSession internal constructor(
 
     private fun handleClick(event: InventoryPreClickEvent) {
         val player = event.player
+        // Minestom sends the real items again after a click, so the player slots are shown again
+        if (player.getTag(PLAYER_SLOTS_OWNER) === this) showPlayerSlotsAtTickEnd(player)
         val click = event.click
         val cursor = player.inventory.cursorItem
 
@@ -432,6 +443,21 @@ public class MenuSession internal constructor(
             event.isCancelled = context.isCancelled
             return
         }
+        val covered = frame.playerSlots
+        if (covered.isNotEmpty()) {
+            // Drags and double clicks may touch slots the menu shows instead of the player's items
+            if (click is Click.Drag || click is Click.Double) {
+                event.isCancelled = true
+                return
+            }
+            val index = playerSlotIndex(click.slot())
+            val view = index?.let(covered::get)
+            if (view != null) {
+                view.onClick?.invoke(ClickContext(player, index, click, isCancelled = true))
+                event.isCancelled = true
+                return
+            }
+        }
         // Double clicks also collect from the menu, so they must not take items the menu owns
         val context = ClickContext(player, click.slot(), click, isCancelled = click is Click.Double && !canCollect(player.inventory.cursorItem))
         playerInventoryClickHooks.forEach { it(context) }
@@ -491,6 +517,11 @@ public class MenuSession internal constructor(
     }
 
     private fun handleChange(event: InventoryItemChangeEvent) {
+        if (event.inventory is PlayerInventory) {
+            val owner = currentViewers.firstOrNull { it.inventory === event.inventory } ?: return
+            if (owner.getTag(PLAYER_SLOTS_OWNER) === this) showPlayerSlotsAtTickEnd(owner)
+            return
+        }
         if (event.inventory !== inventory || applying) return
         if (event.newItem.isAir) owners -= event.slot
         contentsVersion.value++
@@ -525,6 +556,41 @@ public class MenuSession internal constructor(
         }
     }
 
+    /** Returns the window items that show [player] their inventory with this menu's player slots on top. */
+    internal fun playerWindowItems(player: Player): List<ItemStack> {
+        val items = MutableList(PlayerInventory.INVENTORY_SIZE) { ItemStack.AIR }
+        for (slot in 0 until PlayerInventory.INVENTORY_SIZE) {
+            items[PlayerInventoryUtils.convertMinestomSlotToWindowSlot(slot)] = player.inventory.getItemStack(slot)
+        }
+        for ((index, view) in frame.playerSlots) {
+            items[PlayerInventoryUtils.convertMinestomSlotToWindowSlot(playerInventorySlot(index))] = view.item
+        }
+        return items
+    }
+
+    // The client shows the player inventory window behind every container, so this replaces what it shows
+    private fun showPlayerSlots(player: Player) {
+        if (frame.playerSlots.isEmpty()) {
+            restorePlayerSlots(player)
+            return
+        }
+        player.setTag(PLAYER_SLOTS_OWNER, this)
+        player.sendPacket(WindowItemsPacket(0, 0, playerWindowItems(player), player.inventory.cursorItem))
+    }
+
+    private fun showPlayerSlotsAtTickEnd(player: Player) {
+        player.scheduler().scheduleEndOfTick {
+            if (player.getTag(PLAYER_SLOTS_OWNER) === this && player in currentViewers) showPlayerSlots(player)
+        }
+    }
+
+    // Only the session that showed its player slots restores them, so a menu opened over it keeps its own
+    private fun restorePlayerSlots(player: Player) {
+        if (player.getTag(PLAYER_SLOTS_OWNER) !== this) return
+        player.removeTag(PLAYER_SLOTS_OWNER)
+        if (player.isOnline) player.inventory.update()
+    }
+
     private fun SlotView?.isInput(): Boolean = this?.policy?.canPlace == true
 
     override fun toString(): String = "MenuSession(type=$type, viewers=${currentViewers.size}, disposed=$isDisposed)"
@@ -536,4 +602,16 @@ internal inline fun safely(block: () -> Unit) {
     } catch (e: Throwable) {
         exceptionManager.handleException(e)
     }
+}
+
+// The session whose player slots a player's client shows instead of their own items
+private val PLAYER_SLOTS_OWNER: Tag<MenuSession> = Tag.Transient("lodestone:menu-player-slots")
+
+// Player slots count row by row through the main inventory, with the hotbar as the last row
+private fun playerInventorySlot(index: Int): Int = if (index < 27) index + 9 else index - 27
+
+private fun playerSlotIndex(inventorySlot: Int): Int? = when (inventorySlot) {
+    in 9..35 -> inventorySlot - 9
+    in 0..8 -> inventorySlot + 27
+    else -> null
 }

@@ -4,6 +4,7 @@ import de.ole101.lodestone.item.item
 import de.ole101.lodestone.menu.MenuScope
 import de.ole101.lodestone.menu.layout.*
 import de.ole101.lodestone.menu.render.RenderScope
+import de.ole101.lodestone.menu.render.requirePlayerSlot
 import de.ole101.lodestone.menu.slot.SlotScope
 import de.ole101.lodestone.text.glyph.Glyph
 import de.ole101.lodestone.text.glyph.SHADER_HIDDEN_COLOR
@@ -29,6 +30,18 @@ public fun MenuScope.slot(index: Int, block: SlotScope.() -> Unit) {
 
 public fun MenuScope.slot(column: Int, row: Int, block: SlotScope.() -> Unit) {
     slot(session.type.slotIndex(column, row), block)
+}
+
+/**
+ * Adds a slot of each viewer's own inventory at [column] and [row], shown instead of their item while the menu is
+ * open. Rows 0 to 2 are the main inventory from the top and row 3 is the hotbar.
+ * Throws [IllegalArgumentException] if the slot is outside 9 by 4.
+ *
+ * @see RenderScope.playerSlot
+ */
+public fun MenuScope.playerSlot(column: Int, row: Int, block: SlotScope.() -> Unit) {
+    requirePlayerSlot(column, row)
+    element { playerSlot(column, row, block) }
 }
 
 /**

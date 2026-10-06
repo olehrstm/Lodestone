@@ -4,6 +4,8 @@ import de.ole101.lodestone.menu.MenuDsl
 import de.ole101.lodestone.menu.MenuScope
 import de.ole101.lodestone.menu.MenuSession
 import de.ole101.lodestone.menu.layout.*
+import de.ole101.lodestone.menu.slot.ClickContext
+import de.ole101.lodestone.menu.slot.SlotPolicy
 import de.ole101.lodestone.menu.slot.SlotScope
 import de.ole101.lodestone.menu.slot.SlotView
 import de.ole101.lodestone.reactive.EffectScope
@@ -31,6 +33,7 @@ public class RenderScope internal constructor(
     private val type: MenuType = session.type
     internal val slots = LinkedHashMap<Int, SlotView>()
     internal val layers = mutableListOf<TitleLayer>()
+    internal val playerSlots = LinkedHashMap<Int, SlotView>()
 
     /**
      * Fills the slot at [index] as configured in [block]. A later element that fills the same slot wins.
@@ -46,9 +49,22 @@ public class RenderScope internal constructor(
     }
 
     /**
+     * Fills the slot at [column] and [row] of each viewer's own inventory, as configured in [block]. Rows 0 to 2 are
+     * the main inventory from the top and row 3 is the hotbar. Viewers see this item instead of their own while the
+     * menu is open, and their real items stay untouched. [ClickContext.slot] is `row * 9 + column`.
+     * Throws [IllegalArgumentException] if the slot is outside 9 by 4 or its policy is not [SlotPolicy.LOCKED].
+     */
+    public fun playerSlot(column: Int, row: Int, block: SlotScope.() -> Unit) {
+        requirePlayerSlot(column, row)
+        val view = SlotScope(session, coroutineScope).apply(block).build()
+        require(view.policy == SlotPolicy.LOCKED) { "Player inventory slots must be LOCKED, but were ${view.policy}" }
+        playerSlots[row * 9 + column] = view
+    }
+
+    /**
      * Draws [glyph] in the title, tinted with [color]. The default white shows the texture as it is. With a
      * [Position.Pixel], its x is the left edge, center or right edge depending on [align], and its y the top. With a
-     * [Position.Cell], the glyph is aligned inside the slot squares with [align] and [vAlign]. [vAlign] does nothing
+     * [Position.Cell] or [Position.PlayerCell], the glyph is aligned inside the slot squares with [align] and [vAlign]. [vAlign] does nothing
      * for pixel positions. Throws [IllegalArgumentException] if the glyph has no [Glyph.width], no [Glyph.height] when
      * [vAlign] is not [VAlign.TOP] in a cell, or the cell is outside the menu.
      */
@@ -65,24 +81,23 @@ public class RenderScope internal constructor(
 
     internal fun glyphPosition(glyph: Glyph, at: Position, align: TextAlign, vAlign: VAlign): Pair<Int, Int> {
         val width = requireNotNull(glyph.width) { "Glyph needs a width to be drawn in a menu, but $glyph has none" }
-        return when (at) {
-            is Position.Pixel -> at.x - align.anchor(width) to at.y
-            is Position.Cell -> {
-                val height = if (vAlign == VAlign.TOP) 0 else requireNotNull(glyph.height) { "Glyph needs a height to be aligned $vAlign, but $glyph has none" }
-                anchorX(at, align) - align.anchor(width) to alignedY(at.row, height, vAlign)
-            }
-        }
+        val box = boxOf(at) ?: return (at as Position.Pixel).x - align.anchor(width) to at.y
+        val height = if (vAlign == VAlign.TOP) 0 else requireNotNull(glyph.height) { "Glyph needs a height to be aligned $vAlign, but $glyph has none" }
+        return box.anchorX(align) - align.anchor(width) to box.alignedY(height, vAlign)
     }
 
     /**
      * Draws the default-font [text] in the title. With a [Position.Pixel], its x is the left edge, center or right
-     * edge depending on [align], and its y the top. With a [Position.Cell], the text is aligned inside the cells
-     * with [align] and [vAlign]. [vAlign] does nothing for pixel positions.
+     * edge depending on [align], and its y the top. With a [Position.Cell] or [Position.PlayerCell], the text is
+     * aligned inside the cells with [align] and [vAlign]. [vAlign] does nothing for pixel positions.
      */
     public fun text(at: Position, align: TextAlign = TextAlign.LEFT, vAlign: VAlign = VAlign.TOP, text: () -> Component) {
-        layers += when (at) {
-            is Position.Pixel -> TitleLayer.TextLayer(text(), at.x, at.y, align)
-            is Position.Cell -> TitleLayer.TextLayer(text(), anchorX(at, align), alignedY(at.row, MenuMetrics.TEXT_HEIGHT, vAlign), align)
+        val box = boxOf(at)
+        layers += if (box == null) {
+            at as Position.Pixel
+            TitleLayer.TextLayer(text(), at.x, at.y, align)
+        } else {
+            TitleLayer.TextLayer(text(), box.anchorX(align), box.alignedY(MenuMetrics.TEXT_HEIGHT, vAlign), align)
         }
     }
 
@@ -91,19 +106,31 @@ public class RenderScope internal constructor(
         effect.onCleanup(block)
     }
 
-    // Also for slots that are not next to each other
-    private fun anchorX(cell: Position.Cell, align: TextAlign): Int {
-        type.slotIndex(cell.columns.last, cell.row)
-        val left = type.slotX(cell.columns.first)
-        return left + align.anchor(type.slotX(cell.columns.last) + MenuMetrics.SLOT_SIZE - left)
+    // The slot squares a cell covers, from the left edge of the first slot to the right edge of the last
+    private fun boxOf(at: Position): SlotBox? = when (at) {
+        is Position.Pixel -> null
+        is Position.Cell -> {
+            type.slotIndex(at.columns.last, at.row)
+            SlotBox(type.slotX(at.columns.first), type.slotX(at.columns.last) + MenuMetrics.SLOT_SIZE, type.slotY(at.row))
+        }
+
+        is Position.PlayerCell -> SlotBox(
+            MenuMetrics.cellX(at.columns.first),
+            MenuMetrics.cellX(at.columns.last) + MenuMetrics.SLOT_SIZE,
+            type.playerSlotY(at.row),
+        )
     }
 
-    private fun alignedY(row: Int, height: Int, vAlign: VAlign): Int {
-        val free = MenuMetrics.SLOT_SIZE - height
-        return type.slotY(row) + when (vAlign) {
-            VAlign.TOP -> 0
-            VAlign.MIDDLE -> free / 2
-            VAlign.BOTTOM -> free
+    private class SlotBox(val left: Int, val right: Int, val top: Int) {
+        fun anchorX(align: TextAlign): Int = left + align.anchor(right - left)
+
+        fun alignedY(height: Int, vAlign: VAlign): Int {
+            val free = MenuMetrics.SLOT_SIZE - height
+            return top + when (vAlign) {
+                VAlign.TOP -> 0
+                VAlign.MIDDLE -> free / 2
+                VAlign.BOTTOM -> free
+            }
         }
     }
 
@@ -121,4 +148,9 @@ public class RenderScope internal constructor(
 public interface MenuElement {
     /** Draws this element. Runs on the tick thread each time a state it read changes. */
     public fun RenderScope.render()
+}
+
+internal fun requirePlayerSlot(column: Int, row: Int) {
+    require(column in 0..8) { "Player inventory column must be within 0..8, but was $column" }
+    require(row in 0..3) { "Player inventory row must be within 0..3, but was $row" }
 }
