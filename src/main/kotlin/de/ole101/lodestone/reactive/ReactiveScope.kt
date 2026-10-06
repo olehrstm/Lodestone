@@ -1,5 +1,7 @@
 package de.ole101.lodestone.reactive
 
+import de.ole101.lodestone.exceptionManager
+
 /**
  * Owns effects and derived values. Dispose it when its owner goes away.
  *
@@ -89,7 +91,13 @@ public class ReactiveScope internal constructor(
         derivedValues.clear()
         parent?.children?.remove(this)
 
-        disposeHooks.forEach { it() }
+        disposeHooks.forEach { hook ->
+            try {
+                hook()
+            } catch (e: Throwable) {
+                exceptionManager.handleException(e)
+            }
+        }
         disposeHooks.clear()
     }
 
