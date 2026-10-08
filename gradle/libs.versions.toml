@@ -2,7 +2,7 @@
 kotlin-jvm = "2.4.20"
 kotlinx-coroutines = "1.11.0"
 
-minestom = "2026.09.12-26.2"
+minestom = "2026.10.07-26.2"
 adventure-text-minimessage = "5.2.0"
 
 kotest = "6.2.5"
