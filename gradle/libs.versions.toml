@@ -1,5 +1,5 @@
 [versions]
-kotlin-jvm = "2.4.20"
+kotlin-jvm = "2.4.21"
 kotlinx-coroutines = "1.11.0"
 
 minestom = "2026.09.12-26.2"
