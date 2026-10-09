@@ -1,0 +1,48 @@
+style:
+  MaxLineLength:
+    maxLineLength: 140
+  MagicNumber:
+    active: false
+  ReturnCount:
+    excludeGuardClauses: true
+  ClassOrdering:
+    active: true
+  UseIfInsteadOfWhen:
+    active: true
+  ExpressionBodySyntax:
+    active: true
+  UnnecessaryLet:
+    active: true
+  UseLet:
+    active: true
+  UnnecessaryFullyQualifiedName:
+    active: true
+  UnusedImport:
+    active: true
+  UseIfEmptyOrIfBlank:
+    active: true
+  CanBeNonNullable:
+    active: true
+  DataClassShouldBeImmutable:
+    active: true
+
+complexity:
+  TooManyFunctions:
+    allowedFunctionsPerClass: 25
+    ignorePrivate: true
+    ignoreOverridden: true
+  NestedScopeFunctions:
+    active: true
+
+naming:
+  ForbiddenClassName:
+    active: true
+    forbiddenName:
+      - Util
+      - Utils
+      - Helper
+      - Helpers
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: false
