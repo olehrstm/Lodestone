@@ -17,7 +17,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration.Companion.milliseconds
 
-/** Calls processTick() on this thread, like the tick thread would, until [done] holds or 2 seconds pass. */
+/**
+ * Calls processTick() on this thread, like the tick thread would, until [done] holds or 2 seconds pass.
+ */
 private fun tickUntil(done: () -> Boolean) {
     val deadline = System.nanoTime() + 2_000_000_000
     while (!done()) {

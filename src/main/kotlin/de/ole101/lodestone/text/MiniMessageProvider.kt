@@ -12,7 +12,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
  *
  * [MiniMessageProvider] always includes them.
  */
-public val LodestoneTags: TagResolver = TagResolver.resolver(ColorTag(), SmallCapsTag.RESOLVER)
+public val LodestoneTags: TagResolver = TagResolver.resolver(ColorTag, SmallCapsTag.RESOLVER)
 
 /**
  * Shared [MiniMessage] instance used by [mini] and the other text helpers.
@@ -31,16 +31,15 @@ public object MiniMessageProvider {
      * with `TagResolver.resolver(...)`.
      */
     public fun configure(extra: TagResolver) {
-        this.instance = build(extra)
+        instance = build(extra)
     }
 
-    public fun parse(message: String): Component = this.instance.deserialize(message)
+    public fun parse(message: String): Component = instance.deserialize(message)
 
-    public fun escapeTags(message: String): String = this.instance.escapeTags(message)
+    public fun escapeTags(message: String): String = instance.escapeTags(message)
 
-    private fun build(extra: TagResolver): MiniMessage =
-        MiniMessage
-            .builder()
-            .tags(TagResolver.resolver(TagResolver.standard(), LodestoneTags, extra))
-            .build()
+    private fun build(extra: TagResolver): MiniMessage = MiniMessage
+        .builder()
+        .tags(TagResolver.resolver(TagResolver.standard(), LodestoneTags, extra))
+        .build()
 }

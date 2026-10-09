@@ -1,6 +1,10 @@
 package de.ole101.lodestone.reactive
 
 import de.ole101.lodestone.exceptionManager
+import de.ole101.lodestone.reactive.flush.FlushScheduler
+import de.ole101.lodestone.reactive.node.StateImpl
+import de.ole101.lodestone.reactive.node.state
+import de.ole101.lodestone.reactive.node.untracked
 import de.ole101.lodestone.schedulerManager
 import de.ole101.lodestone.testing.TestServer
 import io.kotest.assertions.throwables.shouldThrow
@@ -219,6 +223,17 @@ class ReactiveTest :
             log shouldContainExactly listOf("pre", "effect")
         }
 
+        test("a pre-effect queued by an effect runs before the remaining effects") {
+            val trigger = state(0)
+            val log = mutableListOf<String>()
+            scope.effect { trigger.value = 1 }
+            scope.preEffect { log += "pre ${trigger.value}" }
+            scope.effect { log += "effect ${trigger.value}" }
+            scheduler.run()
+
+            log shouldContainExactly listOf("pre 0", "pre 1", "effect 1")
+        }
+
         test("an effect writing a state another effect reads settles in one flush") {
             val source = state(1)
             val copy = state(0)
@@ -253,14 +268,14 @@ class ReactiveTest :
             scheduler.scheduled shouldBe 2
         }
 
-        test("two effects writing each other forever throw after 100 rounds") {
+        test("two effects writing each other forever throw after 10,000 runs") {
             val a = state(0)
             val b = state(0)
             scope.effect { a.value = b.value + 1 }
             scope.effect { b.value = a.value + 1 }
 
             val error = shouldThrow<IllegalStateException> { scheduler.run() }
-            error.message shouldContain "100 flush rounds"
+            error.message shouldContain "10000 runs in one flush"
             error.message shouldContain "effect("
         }
 
@@ -281,7 +296,7 @@ class ReactiveTest :
             val count = state(0)
             var runs = 0
             scope.effect {
-                untrack { count.value }
+                untracked { count.value }
                 runs++
             }
             scheduler.run()

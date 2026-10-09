@@ -31,11 +31,14 @@ public open class ItemBuilder(
 
     protected fun Component.noItalic(): Component = decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE)
 
+    public fun material(material: Material) {
+        builder.material(material)
+    }
+
     public fun customName(component: Component) {
         builder.customName(component.noItalic())
     }
 
-    /** Sets an empty custom name, so the item shows no name. */
     public fun noName() {
         builder.customName(Component.empty())
     }
@@ -52,7 +55,9 @@ public open class ItemBuilder(
         builder.amount(amount)
     }
 
-    /** Sets the item model to the resource location [model], for example `"minecraft:diamond"`. */
+    /**
+     * Sets the item model to the resource location [model], for example `"minecraft:diamond"`.
+     */
     public fun itemModel(model: String) {
         builder.itemModel(model)
     }
@@ -64,22 +69,24 @@ public open class ItemBuilder(
         builder.set(component, value)
     }
 
-    /** Sets the flag data [component], one that has no value, such as [DataComponents.GLIDER]. */
+    /**
+     * Sets the flag data [component], one that has no value, such as [DataComponents.GLIDER].
+     */
     public fun data(component: DataComponent<MinestomUnit>) {
         builder.set(component)
     }
 
-    /** Hides the whole tooltip, including the name. */
-    public fun noTooltip() {
+    public fun hideTooltip() {
         data(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay(true, emptySet()))
     }
 
-    /** Hides extra tooltip lines such as enchantments and attributes, but keeps the name and lore. */
+    /**
+     * Hides extra tooltip lines such as enchantments and attributes, but keeps the name and lore.
+     */
     public fun hideExtraTooltip() {
         builder.hideExtraTooltip()
     }
 
-    /** Stores [value] under [tag] in the item's custom data. */
     public fun <T> tag(
         tag: Tag<T>,
         value: T,

@@ -13,6 +13,7 @@ import io.kotest.matchers.shouldBe
 import net.minestom.server.command.CommandSender
 import net.minestom.server.command.builder.CommandContext
 import net.minestom.server.command.builder.arguments.ArgumentType
+import net.minestom.server.entity.Player
 
 private fun kommand(
     name: String = "test",
@@ -78,7 +79,7 @@ class KommandTest :
             test("narrows to Player when no type is given") {
                 var ran = false
 
-                val command = kommand { defaultExecutor { ran = true } }
+                val command = kommand { defaultExecutor<Player> { ran = true } }
                 command.defaultExecutor!!.apply(TestSender(), commandContext())
 
                 ran.shouldBeFalse()
@@ -142,7 +143,7 @@ class KommandTest :
             }
 
             test("narrows to Player when no type is given") {
-                val command = kommand { condition { _, _ -> true } }
+                val command = kommand { condition<Player> { _, _ -> true } }
 
                 command.condition!!.canUse(TestSender(), "test").shouldBeFalse()
             }
@@ -204,7 +205,7 @@ class KommandTest :
             test("narrows to Player when no type is given") {
                 var ran = false
 
-                val command = kommand { syntax(ArgumentType.Integer("amount")) { ran = true } }
+                val command = kommand { syntax<Player>(ArgumentType.Integer("amount")) { ran = true } }
                 command.syntaxes
                     .single()
                     .executor

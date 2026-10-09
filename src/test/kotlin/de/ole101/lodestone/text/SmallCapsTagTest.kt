@@ -58,7 +58,7 @@ class SmallCapsTagTest :
                 checkAll(Arb.string(0..40, Codepoint.alphanumeric())) { input ->
                     val translated = smallCaps(input)
 
-                    input.indices.forEach { index ->
+                    for (index in input.indices) {
                         if (!input[index].isLetter()) translated[index] shouldBe input[index]
                     }
                 }

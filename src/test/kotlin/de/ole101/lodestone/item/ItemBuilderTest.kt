@@ -155,7 +155,7 @@ class ItemBuilderTest :
 
         context("noTooltip") {
             test("hides the tooltip entirely") {
-                item(Material.STONE) { noTooltip() }
+                item(Material.STONE) { hideTooltip() }
                     .get(DataComponents.TOOLTIP_DISPLAY) shouldBe TooltipDisplay(true, emptySet())
             }
         }
@@ -184,7 +184,7 @@ class ItemBuilderTest :
                 }
 
                 override fun build(): ItemStack {
-                    noTooltip()
+                    hideTooltip()
                     return super.build()
                 }
             }

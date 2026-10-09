@@ -18,12 +18,12 @@ import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TranslatableComponent
 import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
 
 class GlyphOverlayTest :
     FunSpec({
 
         val shop = Glyph(Key.key("lodestone:gui"), '\uE000', 176)
-        val shifted = ShiftedFonts { base, y -> Key.key(base.namespace(), "${base.value()}_y$y") }
 
         fun Component.spaceKeys() = children().filterIsInstance<TranslatableComponent>().map { it.key() }
 
@@ -33,11 +33,41 @@ class GlyphOverlayTest :
             glyphOverlay { } shouldBe Component.empty()
         }
 
-        test("tints a glyph with the given color and keeps it when shifted") {
-            val line = glyphOverlay(shifted) { glyph(shop, x = 0, y = 4, color = NamedTextColor.WHITE) }
+        test("moves a shifted glyph with the shader and keeps its tint") {
+            val line = glyphOverlay { glyph(shop, x = 0, y = 4, color = NamedTextColor.WHITE) }
 
-            line.items().single().color() shouldBe NamedTextColor.WHITE
-            line.items().single().font() shouldBe Key.key("lodestone:gui_y4")
+            line.items().single().color() shouldBe SHADER_HIDDEN_COLOR
+            line.items().single().shadowColor() shouldBe buildRelativeShadowMarker(4, NamedTextColor.WHITE)
+            line.items().single().font() shouldBe shop.font
+        }
+
+        test("tints an uncolored shifted glyph white by default") {
+            val line = glyphOverlay { glyph(shop, x = 0, y = -3) }
+
+            line.items().single().shadowColor() shouldBe buildRelativeShadowMarker(-3, NamedTextColor.WHITE)
+        }
+
+        test("tints uncolored shifted items with the inherited color") {
+            val gray = TextColor.color(0x404040)
+            val line =
+                glyphOverlay(gray) {
+                    glyph(shop, x = 0, y = 5)
+                    text(Component.text("a"), x = 0, y = 5)
+                    text(Component.text("b", NamedTextColor.RED), x = 0, y = 5)
+                }
+
+            line.items().map { it.shadowColor() } shouldContainExactly
+                listOf(
+                    buildRelativeShadowMarker(5, gray),
+                    buildRelativeShadowMarker(5, gray),
+                    buildRelativeShadowMarker(5, NamedTextColor.RED),
+                )
+        }
+
+        test("leaves unshifted items without a shader marker") {
+            val line = glyphOverlay { glyph(shop, x = 0, y = 0, color = NamedTextColor.WHITE) }
+
+            line.items().single().shadowColor() shouldBe null
         }
 
         test("composes a glyph and centered text") {
@@ -79,31 +109,19 @@ class GlyphOverlayTest :
             line.spaceKeys() shouldContainExactly listOf("space.-6", "space.-6")
         }
 
-        test("shifts the root and explicit child fonts for y other than 0") {
+        test("moves shifted text with the shader and keeps its fonts") {
             val text =
                 Component
                     .text("a")
                     .append(Component.text("b").font(Key.key("my:icons")))
-                    .append(Component.text("c"))
 
-            val line = glyphOverlay(shifted) { text(text, x = 4, y = 12) }
+            val line = glyphOverlay { text(text, x = 4, y = 12) }
 
-            line.items() shouldContainExactly
-                listOf(
-                    Component
-                        .text("a")
-                        .font(Key.key("minecraft:default_y12"))
-                        .append(Component.text("b").font(Key.key("my:icons_y12")))
-                        .append(Component.text("c")),
-                )
-            line.children().filterIsInstance<TranslatableComponent>().map { it.font() } shouldContainExactly
-                listOf(Space.font, Space.font)
-        }
-
-        test("throws for y other than 0 without shifted fonts") {
-            shouldThrow<IllegalStateException> {
-                glyphOverlay { text(Component.text("a"), x = 0, y = 12) }
-            }.message shouldContain "12"
+            val item = line.items().single()
+            item.font() shouldBe null
+            item.shadowColor() shouldBe buildRelativeShadowMarker(12, NamedTextColor.WHITE)
+            item.children().single().font() shouldBe Key.key("my:icons")
+            line.pixelWidth() shouldBe 0
         }
 
         test("rejects a glyph without width") {

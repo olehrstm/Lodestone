@@ -7,15 +7,14 @@ plugins {
 }
 
 group = "de.ole101.lodestone"
-version =
-    providers
-        .gradleProperty("lodestone_version")
-        .orElse(
-            providers
-                .fileContents(layout.projectDirectory.file("version.txt"))
-                .asText
-                .map { "${it.trim()}-development" },
-        ).get()
+version = providers
+    .gradleProperty("lodestone_version")
+    .orElse(
+        providers
+            .fileContents(layout.projectDirectory.file("version.txt"))
+            .asText
+            .map { "${it.trim()}-development" },
+    ).get()
 
 repositories {
     mavenCentral()
@@ -53,6 +52,11 @@ java {
 kotlin {
     jvmToolchain(25)
     explicitApi()
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    config.setFrom(files("detekt.yml"))
 }
 
 spotless {

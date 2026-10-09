@@ -17,7 +17,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 class ColorTagTest :
     FunSpec({
 
-        val resolver = ColorTag()
+        val resolver = ColorTag
         val miniMessage =
             MiniMessage
                 .builder()
