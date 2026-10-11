@@ -104,7 +104,7 @@ public class AnvilInputScope internal constructor() {
     }
 
     /**
-     * Draws custom artwork and a title using [block], for example `overlay(background, px(0, 0))` and sprites over
+     * Draws custom artwork and a title using [block], for example `glyph(background, px(0, 0))` and sprites over
      * slots 0 and 2. Requires matching resource-pack assets and the GUI text shader for overlays. The native field
      * stays at its vanilla position. Runs during setup on the tick thread, and its exceptions reach the caller.
      */

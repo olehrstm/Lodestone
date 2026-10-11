@@ -7,18 +7,18 @@ import de.ole101.lodestone.reactive.node.Derived
 import de.ole101.lodestone.reactive.node.State
 
 /**
- * Shows the items [items] returns page by page in the slots of [slots], each slot configured by [content].
+ * Shows the items [items] returns page by page in the slots of [area], each slot configured by [content].
  * Returns the [Pager] that turns the pages.
  *
- * @throws IllegalArgumentException if [slots] reaches outside the menu.
+ * @throws IllegalArgumentException if [area] reaches outside the menu.
  */
 public fun <T> MenuScope.paginate(
     items: () -> List<T>,
-    slots: SlotArea,
+    area: SlotArea,
     content: SlotScope.(T) -> Unit,
 ): Pager {
     val allItems = derived(items)
-    val areaSlots = slots.slotsIn(session.type)
+    val areaSlots = area.slotsIn(session.type)
     val perPage = areaSlots.size
     val pager = Pager(state(0), derived { maxOf(1, Math.ceilDiv(allItems.value.size, perPage)) })
 

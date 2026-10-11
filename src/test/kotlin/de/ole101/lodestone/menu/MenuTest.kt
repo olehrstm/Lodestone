@@ -1,8 +1,9 @@
 package de.ole101.lodestone.menu
 
-import de.ole101.lodestone.menu.element.overlay
+import de.ole101.lodestone.menu.element.glyph
 import de.ole101.lodestone.menu.element.slot
 import de.ole101.lodestone.menu.element.text
+import de.ole101.lodestone.menu.element.title
 import de.ole101.lodestone.menu.layout.VAlign
 import de.ole101.lodestone.menu.layout.cell
 import de.ole101.lodestone.menu.slot.SlotPolicy
@@ -122,7 +123,7 @@ class MenuTest :
 
         test("a glyph with a height is centered vertically in its cell") {
             val glyph = Glyph(Key.key("test:ui"), 'a', 16, 8)
-            val session = menu(rows = 1) { overlay(glyph, cell(0, 0), vAlign = VAlign.MIDDLE) }.create()
+            val session = menu(rows = 1) { glyph(glyph, cell(0, 0), vAlign = VAlign.MIDDLE) }.create()
 
             // Slot top 17 + (18 - 8) / 2 = 22, minus the title line at 6
             session.inventory.title.fonts() shouldContain Key.key("test:ui")
@@ -133,7 +134,7 @@ class MenuTest :
 
         test("aligning a glyph without a height is rejected") {
             shouldThrow<IllegalArgumentException> {
-                menu(rows = 1) { overlay(Glyph(Key.key("test:ui"), 'a', 16), cell(0, 0), vAlign = VAlign.BOTTOM) }.create()
+                menu(rows = 1) { glyph(Glyph(Key.key("test:ui"), 'a', 16), cell(0, 0), vAlign = VAlign.BOTTOM) }.create()
             }
         }
 

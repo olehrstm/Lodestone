@@ -1,7 +1,7 @@
 package de.ole101.lodestone.menu
 
 import de.ole101.lodestone.menu.element.ButtonGlyphs
-import de.ole101.lodestone.menu.element.overlay
+import de.ole101.lodestone.menu.element.glyph
 import de.ole101.lodestone.menu.element.playerButton
 import de.ole101.lodestone.menu.element.playerSlot
 import de.ole101.lodestone.menu.layout.playerCell
@@ -79,7 +79,7 @@ class PlayerSlotTest :
             val session =
                 menu(rows = 3) {
                     playerButton(4, 3, ButtonGlyphs(glyph, glyph)) { onClick { clicks++ } }
-                    overlay(glyph, playerCell(0, 0))
+                    glyph(glyph, playerCell(0, 0))
                 }.open(player)
 
             EventDispatcher.call(InventoryPreClickEvent(player.inventory, player, Click.Left(4)))

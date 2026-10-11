@@ -70,7 +70,7 @@ public fun MenuScope.playerSlot(
  * [VAlign.TOP].
  * @see RenderScope.glyph
  */
-public fun MenuScope.overlay(
+public fun MenuScope.glyph(
     glyph: Glyph,
     at: Position,
     align: TextAlign = TextAlign.LEFT,
@@ -85,14 +85,14 @@ public fun MenuScope.overlay(
 /**
  * Draws a full-width sprite behind rows of the menu. [glyph] returns the sprite for each row, counted from 0, or null
  * to leave the row as it is. Each sprite's top-left corner is at the left edge of the menu and the top of the row's
- * slots, so it fits sprites as wide as [MenuMetrics.GUI_WIDTH]. Call it before other overlays to draw it below them.
+ * slots, so it fits sprites as wide as [MenuMetrics.GUI_WIDTH]. Call it before other glyphs to draw it below them.
  *
  * @throws IllegalArgumentException if a glyph has no [Glyph.width].
  */
-public fun MenuScope.rowOverlays(glyph: (row: Int) -> Glyph?) {
+public fun MenuScope.rowGlyphs(glyph: (row: Int) -> Glyph?) {
     for (row in 0 until session.type.rows) {
         val rowGlyph = glyph(row) ?: continue
-        overlay(rowGlyph, px(0, session.type.gui.slotY(row)))
+        glyph(rowGlyph, px(0, session.type.gui.slotY(row)))
     }
 }
 
@@ -110,6 +110,20 @@ public fun MenuScope.text(
     text: () -> Component,
 ) {
     element { text(at, align, vAlign, text) }
+}
+
+/**
+ * Draws [text] as the title, aligned with [align] inside the menu width. Left-aligned titles start where the
+ * container's own title would. [y] is the GUI y of the text's top, by default where the container's own title is,
+ * so `y = MenuMetrics.TITLE_Y + 2` moves it 2 pixels down. The title draws on top of all other text and glyphs.
+ * Requires the GUI text shader for relative shadow markers. Colors use RGB332 precision and replace normal shadows.
+ */
+public fun MenuScope.title(
+    align: TextAlign = TextAlign.LEFT,
+    y: Int = MenuMetrics.TITLE_Y,
+    text: () -> Component,
+) {
+    element { title(text(), align, y) }
 }
 
 /**

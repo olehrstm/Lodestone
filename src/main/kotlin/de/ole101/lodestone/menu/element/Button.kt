@@ -29,36 +29,36 @@ public class ButtonGlyphs(
 )
 
 /**
- * How long a button shows its pressed sprite and ignores further clicks, unless a button sets its own cooldown.
+ * How long a button shows its pressed sprite and ignores further clicks, unless a button sets its own press duration.
  */
-public val DEFAULT_BUTTON_COOLDOWN: Duration = 300.milliseconds
+public val DEFAULT_BUTTON_PRESS_DURATION: Duration = 300.milliseconds
 
 /**
  * Adds a button with [glyphs] centered over [slot] and an invisible item in the slot for clicks and the tooltip.
  * The glyph is centered vertically too when it has a [Glyph.height]. A click on an enabled button shows
- * [ButtonGlyphs.pressed] for [cooldown] and ignores further clicks until then. While the button is disabled, it shows
+ * [ButtonGlyphs.pressed] for [pressDuration] and ignores further clicks until then. While the button is disabled, it shows
  * [ButtonGlyphs.disabled].
  *
- * @throws IllegalArgumentException if [slot] is outside the menu, a glyph has no width, or [cooldown] is negative.
+ * @throws IllegalArgumentException if [slot] is outside the menu, a glyph has no width, or [pressDuration] is negative.
  */
 public fun MenuScope.button(
     slot: Int,
     glyphs: ButtonGlyphs,
-    cooldown: Duration = DEFAULT_BUTTON_COOLDOWN,
+    pressDuration: Duration = DEFAULT_BUTTON_PRESS_DURATION,
     block: ButtonScope.() -> Unit,
 ) {
     val (column, row) = session.type.cellOf(slot)
-    button(column..column, row, glyphs, cooldown, block)
+    button(column..column, row, glyphs, pressDuration, block)
 }
 
 public fun MenuScope.button(
     column: Int,
     row: Int,
     glyphs: ButtonGlyphs,
-    cooldown: Duration = DEFAULT_BUTTON_COOLDOWN,
+    pressDuration: Duration = DEFAULT_BUTTON_PRESS_DURATION,
     block: ButtonScope.() -> Unit,
 ) {
-    button(column..column, row, glyphs, cooldown, block)
+    button(column..column, row, glyphs, pressDuration, block)
 }
 
 /**
@@ -70,10 +70,10 @@ public fun MenuScope.button(
     columns: IntRange,
     row: Int,
     glyphs: ButtonGlyphs,
-    cooldown: Duration = DEFAULT_BUTTON_COOLDOWN,
+    pressDuration: Duration = DEFAULT_BUTTON_PRESS_DURATION,
     block: ButtonScope.() -> Unit,
 ) {
-    button(cell(columns, row), spanSlots(columns, row), glyphs, cooldown, block) { index, slotBlock ->
+    button(cell(columns, row), spanSlots(columns, row), glyphs, pressDuration, block) { index, slotBlock ->
         slot(index, slotBlock)
     }
 }
@@ -83,16 +83,16 @@ public fun MenuScope.button(
  * inventory from the top and row 3 is the hotbar. Viewers see the button instead of their own item while the menu is
  * open. See the `button` overload with a slot index for the rest.
  *
- * @throws IllegalArgumentException if the slot is outside 9 by 4, a glyph has no width, or [cooldown] is negative.
+ * @throws IllegalArgumentException if the slot is outside 9 by 4, a glyph has no width, or [pressDuration] is negative.
  */
 public fun MenuScope.playerButton(
     column: Int,
     row: Int,
     glyphs: ButtonGlyphs,
-    cooldown: Duration = DEFAULT_BUTTON_COOLDOWN,
+    pressDuration: Duration = DEFAULT_BUTTON_PRESS_DURATION,
     block: ButtonScope.() -> Unit,
 ) {
-    playerButton(column..column, row, glyphs, cooldown, block)
+    playerButton(column..column, row, glyphs, pressDuration, block)
 }
 
 /**
@@ -103,10 +103,10 @@ public fun MenuScope.playerButton(
     columns: IntRange,
     row: Int,
     glyphs: ButtonGlyphs,
-    cooldown: Duration = DEFAULT_BUTTON_COOLDOWN,
+    pressDuration: Duration = DEFAULT_BUTTON_PRESS_DURATION,
     block: ButtonScope.() -> Unit,
 ) {
-    button(playerCell(columns, row), columns.toList(), glyphs, cooldown, block) { column, slotBlock ->
+    button(playerCell(columns, row), columns.toList(), glyphs, pressDuration, block) { column, slotBlock ->
         playerSlot(column, row, slotBlock)
     }
 }
@@ -115,12 +115,12 @@ private fun MenuScope.button(
     at: Position,
     slots: List<Int>,
     glyphs: ButtonGlyphs,
-    cooldown: Duration,
+    pressDuration: Duration,
     block: ButtonScope.() -> Unit,
     // Fills one of [slots], which are slot indices for menu buttons and columns for player buttons
     fill: RenderScope.(slot: Int, block: SlotScope.() -> Unit) -> Unit,
 ) {
-    require(!cooldown.isNegative()) { "Cooldown must not be negative, but was $cooldown" }
+    require(!pressDuration.isNegative()) { "Press duration must not be negative, but was $pressDuration" }
     listOf(glyphs.normal, glyphs.pressed, glyphs.disabled).forEach(Glyph::requireWidth)
 
     val button = ButtonScope(session).apply(block)
@@ -147,10 +147,10 @@ private fun MenuScope.button(
                     return@onClick
                 }
 
-                if (cooldown.isPositive()) {
+                if (pressDuration.isPositive()) {
                     isPressed.value = true
                     launch {
-                        delay(cooldown)
+                        delay(pressDuration)
                         isPressed.value = false
                     }
                 }

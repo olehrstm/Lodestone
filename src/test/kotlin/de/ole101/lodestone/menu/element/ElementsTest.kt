@@ -92,8 +92,8 @@ class ElementsTest :
             amountsIn(session, listOf(0, 1, 9, 10)) shouldBe listOf(1, 2, 3, 4)
             amountsIn(session, listOf(18, 19, 27, 28)) shouldBe listOf(1, 3, 2, 4)
 
-            vertical.by(5)
-            horizontal.to(1)
+            vertical.offset += 5
+            horizontal.offset = 1
             schedulerManager.processTickEnd()
             vertical.offset shouldBe 1
             amountsIn(session, listOf(0, 1, 9, 10)) shouldBe listOf(3, 4, 5, 0)
@@ -107,7 +107,7 @@ class ElementsTest :
             val glyph = Glyph(Key.key("test:ui"), 'a', 16)
             val session =
                 menu(rows = 1) {
-                    button(0, ButtonGlyphs(glyph, glyph), cooldown = 1.minutes) {
+                    button(0, ButtonGlyphs(glyph, glyph), pressDuration = 1.minutes) {
                         onClick { log += "click" }
                         onDisabledClick { log += "disabled" }
                     }
@@ -140,7 +140,7 @@ class ElementsTest :
 
         test("row overlays draw one sprite per row and skip rows without one") {
             val row = Glyph(Key.key("test:ui"), 'r', 176)
-            val session = menu(rows = 3) { rowOverlays { if (it == 1) null else row } }.create()
+            val session = menu(rows = 3) { rowGlyphs { if (it == 1) null else row } }.create()
 
             session.inventory.title.texts() shouldBe "rr"
             session.dispose()
@@ -152,7 +152,7 @@ class ElementsTest :
             var clicks = 0
             val session =
                 menu(rows = 1) {
-                    button(3..4, 0, ButtonGlyphs(glyph, glyph), cooldown = Duration.ZERO) { onClick { clicks++ } }
+                    button(3..4, 0, ButtonGlyphs(glyph, glyph), pressDuration = Duration.ZERO) { onClick { clicks++ } }
                 }.open(player)
 
             EventDispatcher.call(InventoryPreClickEvent(session.inventory, player, Click.Left(3)))

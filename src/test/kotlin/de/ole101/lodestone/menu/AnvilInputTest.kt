@@ -1,7 +1,8 @@
 package de.ole101.lodestone.menu
 
 import de.ole101.lodestone.menu.element.anvilInput
-import de.ole101.lodestone.menu.element.overlay
+import de.ole101.lodestone.menu.element.glyph
+import de.ole101.lodestone.menu.element.title
 import de.ole101.lodestone.menu.layout.px
 import de.ole101.lodestone.reactive.node.state
 import de.ole101.lodestone.schedulerManager
@@ -89,7 +90,7 @@ class AnvilInputTest :
                 anvilInput("initial") {
                     layout {
                         title { Component.text(session.anvilInput) }
-                        overlay(Glyph(Key.key("test:background"), 'a', 176, 166), px(0, 0))
+                        glyph(Glyph(Key.key("test:background"), 'a', 176, 166), px(0, 0))
                     }
                     onConfirm { _, _ -> }
                 }.open(player)

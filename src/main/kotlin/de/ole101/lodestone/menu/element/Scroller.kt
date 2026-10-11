@@ -57,22 +57,25 @@ public class Scroller internal constructor(
         get() = maxOffset.value
 
     /**
-     * The number of lines scrolled past, within `0..max`.
+     * The number of lines scrolled past. Values outside `0..max` are clamped, also after the items shrink.
      */
-    public val offset: Int
+    public var offset: Int
         get() = current.value.coerceIn(0, max)
+        set(value) {
+            current.value = value.coerceIn(0, max)
+        }
 
     /**
-     * Scrolls by [lines], where negative values scroll back. Stops at `0` and [max].
+     * Scrolls one line forward, or does nothing at [max].
      */
-    public fun by(lines: Int) {
-        to(offset + lines)
+    public fun next() {
+        offset += 1
     }
 
     /**
-     * Scrolls to [offset], clamped to `0..max`.
+     * Scrolls one line back, or does nothing at the start.
      */
-    public fun to(offset: Int) {
-        current.value = offset.coerceIn(0, max)
+    public fun previous() {
+        offset -= 1
     }
 }
