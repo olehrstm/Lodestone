@@ -7,7 +7,7 @@ adventure-text-minimessage = "5.2.0"
 
 kotest = "6.2.5"
 
-spotless = "8.10.3"
+spotless = "8.10.4"
 detekt = "2.0.0-alpha.6"
 
 [libraries]
