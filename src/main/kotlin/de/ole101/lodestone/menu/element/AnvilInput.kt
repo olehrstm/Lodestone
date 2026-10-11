@@ -10,7 +10,6 @@ import de.ole101.lodestone.menu.menu
 import de.ole101.lodestone.menu.session.AnvilField
 import de.ole101.lodestone.menu.slot.SlotScope
 import net.kyori.adventure.text.Component
-import net.minestom.server.component.DataComponents
 import net.minestom.server.entity.Player
 import net.minestom.server.inventory.click.Click
 import net.minestom.server.item.ItemStack
@@ -30,10 +29,10 @@ public fun anvilInput(
 
 /**
  * Configures this anvil's rename field with [initial] text, which [MenuSession.anvilInput] reports filtered and
- * trimmed, a cancel action in slot 0, and confirmation in slot 2. Slot 1 is left empty. Actions react to left clicks
- * only and never move items or consume experience. Cancelling or successfully confirming goes back when possible,
- * otherwise closes the inventory. The handler runs after that, so it can open another menu. [block] runs during setup
- * on the tick thread, and its exceptions reach the caller.
+ * trimmed, a cancel action in slot 0, and confirmation in slot 2. Slot 1 holds an invisible item that cannot be
+ * taken. Actions react to left clicks only and never move items or consume experience. Cancelling or successfully
+ * confirming goes back when possible, otherwise closes the inventory. The handler runs after that, so it can open
+ * another menu. [block] runs during setup on the tick thread, and its exceptions reach the caller.
  *
  * @throws IllegalStateException if this is not an anvil, input was already configured, or no confirmation handler
  * was registered.
@@ -49,11 +48,19 @@ public fun MenuScope.anvilInput(
     input.layout?.invoke(this)
 
     slot(0) {
-        // A negative repair cost makes the client predict a cost of 0 while typing, so it shows no cost label
-        item { input.cancelItem().withCustomName(Component.text(initial)).with(DataComponents.REPAIR_COST, -1_000_000) }
+        item { input.cancelItem().withCustomName(Component.text(initial)) }
         onLeftClick { player ->
             session.finishAnvilInput(player)
             input.cancel?.invoke(player)
+        }
+    }
+    // An item the client cannot combine makes it predict no result while typing, so it shows no cost label
+    slot(1) {
+        item {
+            item(Material.PAPER) {
+                itemModel("minecraft:air")
+                hideTooltip()
+            }
         }
     }
     slot(2) {
