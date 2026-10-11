@@ -10,6 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * The hooks that menu blocks registered on a session.
  */
 internal class MenuHooks {
+    // Copied on write, because a hook may add or remove hooks while they run, for example by disposing the session
     val open = CopyOnWriteArrayList<(Player) -> Unit>()
     val close = CopyOnWriteArrayList<(Player, CloseReason) -> Unit>()
     val click = CopyOnWriteArrayList<(ClickContext) -> Unit>()

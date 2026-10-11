@@ -5,7 +5,6 @@ import de.ole101.lodestone.menu.slot.allowsCollecting
 import de.ole101.lodestone.menu.slot.allowsPlacing
 import net.minestom.server.entity.Player
 import net.minestom.server.item.ItemStack
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Tracks who put items into the input slots of a session and gives them back.
@@ -13,9 +12,8 @@ import java.util.concurrent.ConcurrentHashMap
 internal class InputSlots(
     private val session: MenuSession,
 ) {
-    // Who last put items into each input slot, to give them back. A stack filled by several players goes to the last
-    // one. Viewers may click on different tick threads.
-    private val owners = ConcurrentHashMap<Int, Player>()
+    // Who last put items into each input slot, to give them back. A stack filled by several players goes to the last one
+    private val owners = HashMap<Int, Player>()
 
     private val inventory
         get() = session.inventory

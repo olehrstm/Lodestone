@@ -21,6 +21,7 @@ import de.ole101.lodestone.reactive.node.untracked
 import de.ole101.lodestone.schedulerManager
 import kotlinx.coroutines.cancel
 import net.kyori.adventure.text.Component
+import net.minestom.server.ServerFlag
 import net.minestom.server.entity.Player
 import net.minestom.server.event.inventory.InventoryCloseEvent
 import net.minestom.server.event.inventory.InventoryItemChangeEvent
@@ -33,13 +34,21 @@ import net.minestom.server.timer.TaskSchedule
 /**
  * A live menu. It is one inventory with its state that all its viewers share. Create it with [MenuBlueprint.create].
  *
- * State changes re-render the menu once per tick, at tick end. Use a session only on the tick thread.
+ * State changes re-render the menu once per tick, at tick end. Use a session only on the tick thread. Menus require
+ * `minestom.dispatcher-threads` to be 1, because viewers in different chunks would otherwise click on different
+ * threads and change the shared state at the same time.
  */
 public class MenuSession internal constructor(
     public val type: MenuType,
     private val disposePolicy: DisposePolicy,
     setup: MenuScope.() -> Unit,
 ) {
+    init {
+        check(ServerFlag.DISPATCHER_THREADS == 1) {
+            "Menus require minestom.dispatcher-threads to be 1, but it was ${ServerFlag.DISPATCHER_THREADS}"
+        }
+    }
+
     internal val inventory = Inventory(type.inventoryType, Component.empty())
     internal val hooks = MenuHooks()
 

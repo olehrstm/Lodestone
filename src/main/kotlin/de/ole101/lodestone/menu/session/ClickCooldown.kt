@@ -2,13 +2,12 @@ package de.ole101.lodestone.menu.session
 
 import net.minestom.server.entity.Player
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 
 internal class ClickCooldown {
     var duration: Duration = Duration.ZERO
 
-    private val lastClicks = ConcurrentHashMap<UUID, Long>()
+    private val lastClicks = HashMap<UUID, Long>()
 
     /**
      * Counts this click of [player] and returns true, unless they clicked within [duration] of their last counted

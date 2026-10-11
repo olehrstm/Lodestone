@@ -8,7 +8,6 @@ import net.minestom.server.event.inventory.InventoryPreClickEvent
 import net.minestom.server.event.player.PlayerDisconnectEvent
 import net.minestom.server.inventory.PlayerInventory
 import net.minestom.server.tag.Tag
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Routes the events of player inventories to the sessions they belong to. Events of a menu's own inventory go to the
@@ -16,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 internal object MenuEvents {
     private val SESSION: Tag<MenuSession> = Tag.Transient("lodestone:menu-session")
-    private val sessions = ConcurrentHashMap.newKeySet<MenuSession>()
+    private val sessions = HashSet<MenuSession>()
 
     init {
         val node = eventNode("lodestone:menu")

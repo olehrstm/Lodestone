@@ -3,7 +3,6 @@ package de.ole101.lodestone.menu.session
 import de.ole101.lodestone.menu.CloseReason
 import de.ole101.lodestone.menu.MenuSession
 import net.minestom.server.entity.Player
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * The way back of each player, and the players who may come back to a session or answer a prompt outside it.
@@ -12,9 +11,9 @@ internal class Navigation(
     private val session: MenuSession,
 ) {
     // The session each player goes back to from here, and the players who may come back here from a later menu
-    private val backs = ConcurrentHashMap<Player, MenuSession>()
-    private val away = ConcurrentHashMap.newKeySet<Player>()
-    private val prompts = ConcurrentHashMap<Player, PromptToken>()
+    private val backs = HashMap<Player, MenuSession>()
+    private val away = HashSet<Player>()
+    private val prompts = HashMap<Player, PromptToken>()
 
     val hasNoAway: Boolean
         get() = away.isEmpty()

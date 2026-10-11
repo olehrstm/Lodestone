@@ -54,6 +54,8 @@ public class MenuBlueprint<P> internal constructor(
      * Creates a session and runs the setup with [props]. The session renders before this returns, but nobody
      * sees it until [MenuSession.open]. [disposePolicy] decides whether the session is disposed when its last viewer
      * leaves. Exceptions thrown by the setup reach the caller. Call it on the tick thread.
+     *
+     * @throws IllegalStateException if `minestom.dispatcher-threads` is not 1.
      */
     public fun create(
         props: P,
