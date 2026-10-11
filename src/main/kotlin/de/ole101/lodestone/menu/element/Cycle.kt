@@ -15,10 +15,9 @@ import net.minestom.server.item.ItemStack
 public fun <T> MenuScope.cycle(
     slot: Int,
     options: List<T>,
-    initial: T = options.firstOrNull() ?: throw IllegalArgumentException("Cycle needs at least one option"),
+    initial: T = firstOption(options),
     display: (T) -> ItemStack,
 ): Cycler<T> {
-    require(options.isNotEmpty()) { "Cycle needs at least one option" }
     require(initial in options) { "Initial option $initial is not one of $options" }
     val cycler = Cycler(options.toList(), state(options.indexOf(initial)))
 
@@ -45,9 +44,14 @@ public fun <T> MenuScope.cycle(
     column: Int,
     row: Int,
     options: List<T>,
-    initial: T = options.firstOrNull() ?: throw IllegalArgumentException("Cycle needs at least one option"),
+    initial: T = firstOption(options),
     display: (T) -> ItemStack,
 ): Cycler<T> = cycle(session.type.slotIndex(column, row), options, initial, display)
+
+private fun <T> firstOption(options: List<T>): T {
+    require(options.isNotEmpty()) { "Cycle needs at least one option" }
+    return options.first()
+}
 
 /**
  * The selection of a [cycle] slot. Reading [selected] in an effect or element tracks it.
