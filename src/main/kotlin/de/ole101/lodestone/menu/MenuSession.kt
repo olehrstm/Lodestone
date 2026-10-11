@@ -57,11 +57,11 @@ public class MenuSession internal constructor(
     internal var frame = Frame.EMPTY
         private set
 
-    internal val anvil = AnvilField(this)
     internal val clicks = ClickHandler(this)
     internal val inputSlots = InputSlots(this)
     internal val playerOverlay = PlayerSlotOverlay(this)
     internal val navigation = Navigation(this)
+    internal var anvil: AnvilField? = null
 
     /**
      * Whether [dispose] ran. A disposed session cannot be opened.
@@ -84,7 +84,7 @@ public class MenuSession internal constructor(
      * Anvil text is shared by the viewers of this session.
      */
     public val anvilInput: String
-        get() = anvil.text
+        get() = anvil?.text.orEmpty()
 
     init {
         listen<InventoryPreClickEvent>(node, clicks::handle)
@@ -94,7 +94,7 @@ public class MenuSession internal constructor(
         }
         listen<InventoryItemChangeEvent>(node, ::handleChange)
         listen<PlayerDisconnectEvent>(node) { event -> inputSlots.returnItemsOf(event.player) }
-        listen<PlayerAnvilInputEvent>(node, anvil::handleInput)
+        listen<PlayerAnvilInputEvent>(node) { event -> anvil?.handleInput(event) }
         reactive.afterFlush(::commit)
 
         try {
@@ -147,7 +147,7 @@ public class MenuSession internal constructor(
 
     internal fun openViewer(player: Player): Boolean {
         if (player in currentViewers) return false
-        anvil.seedIfConfigured()
+        hooks.beforeWindowOpen.forEach { it() }
         if (!player.openInventory(inventory)) return false
 
         viewers = currentViewers + player
@@ -290,7 +290,7 @@ public class MenuSession internal constructor(
         frame = root.frame()
         applySlots(previous)
         if (frame.playerItems != previous.playerItems) currentViewers.forEach(playerOverlay::show)
-        if (frame.itemAt(0) != previous.itemAt(0)) anvil.seedIfConfigured()
+        hooks.afterSlotsApplied.forEach { it(previous) }
         if (frame.layers != previous.layers) applyTitle()
     }
 
@@ -307,7 +307,7 @@ public class MenuSession internal constructor(
     private fun applyTitle() {
         safely {
             // Changing the title reopens the window
-            anvil.seedIfConfigured()
+            hooks.beforeWindowOpen.forEach { it() }
             inventory.title = frame.title(type)
         }
     }

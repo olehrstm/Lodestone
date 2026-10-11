@@ -7,6 +7,7 @@ import de.ole101.lodestone.menu.MenuScope
 import de.ole101.lodestone.menu.MenuSession
 import de.ole101.lodestone.menu.layout.MenuType
 import de.ole101.lodestone.menu.menu
+import de.ole101.lodestone.menu.session.AnvilField
 import de.ole101.lodestone.menu.slot.SlotScope
 import net.kyori.adventure.text.Component
 import net.minestom.server.component.DataComponents
@@ -41,10 +42,10 @@ public fun MenuScope.anvilInput(
     initial: String = "",
     block: AnvilInputScope.() -> Unit,
 ) {
-    check(session.type == MenuType.ANVIL) { "Anvil input requires ANVIL, but was ${session.type}" }
     val input = AnvilInputScope().apply(block)
     val confirm = checkNotNull(input.confirm) { "Anvil input needs an onConfirm handler" }
-    session.anvil.configure(initial)
+    check(session.anvil == null) { "Anvil input is already configured" }
+    session.anvil = AnvilField(session, initial)
     input.layout?.invoke(this)
 
     slot(0) {

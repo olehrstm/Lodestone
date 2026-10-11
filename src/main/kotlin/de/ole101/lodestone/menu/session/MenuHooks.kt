@@ -1,6 +1,7 @@
 package de.ole101.lodestone.menu.session
 
 import de.ole101.lodestone.menu.CloseReason
+import de.ole101.lodestone.menu.render.Frame
 import de.ole101.lodestone.menu.slot.ClickContext
 import net.minestom.server.entity.Player
 import java.util.concurrent.CopyOnWriteArrayList
@@ -15,4 +16,8 @@ internal class MenuHooks {
     val playerInventoryClick = CopyOnWriteArrayList<(ClickContext) -> Unit>()
     val outsideClick = CopyOnWriteArrayList<(ClickContext) -> Unit>()
     val tick = CopyOnWriteArrayList<() -> Unit>()
+
+    // Session features such as the anvil field hook in here instead of the session calling them
+    val beforeWindowOpen = CopyOnWriteArrayList<() -> Unit>()
+    val afterSlotsApplied = CopyOnWriteArrayList<(previous: Frame) -> Unit>()
 }
