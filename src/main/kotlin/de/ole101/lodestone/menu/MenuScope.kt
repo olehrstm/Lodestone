@@ -10,6 +10,7 @@ import de.ole101.lodestone.reactive.ReactiveScope
 import de.ole101.lodestone.reactive.node.Derived
 import de.ole101.lodestone.reactive.node.EffectScope
 import de.ole101.lodestone.reactive.node.State
+import de.ole101.lodestone.reactive.node.StateImpl
 import de.ole101.lodestone.reactive.node.untracked
 import de.ole101.lodestone.text.glyph.TextAlign
 import kotlinx.coroutines.CoroutineScope
@@ -44,7 +45,7 @@ public class MenuScope internal constructor(
     public val viewers: Set<Player>
         get() = session.viewers
 
-    public fun <T> state(initial: T): State<T> = reactive.state(initial)
+    public fun <T> state(initial: T): State<T> = StateImpl(initial)
 
     public fun <T> derived(compute: () -> T): Derived<T> = reactive.derived(compute)
 

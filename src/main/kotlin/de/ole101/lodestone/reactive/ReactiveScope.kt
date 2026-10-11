@@ -7,8 +7,6 @@ import de.ole101.lodestone.reactive.node.DerivedImpl
 import de.ole101.lodestone.reactive.node.EffectNode
 import de.ole101.lodestone.reactive.node.EffectScope
 import de.ole101.lodestone.reactive.node.Node
-import de.ole101.lodestone.reactive.node.State
-import de.ole101.lodestone.reactive.node.StateImpl
 import de.ole101.lodestone.reactive.node.safely
 
 /**
@@ -28,11 +26,6 @@ public class ReactiveScope internal constructor(
     private var disposed = false
 
     public constructor(scheduler: FlushScheduler = FlushScheduler.EndOfTick) : this(Flusher(scheduler), null)
-
-    /**
-     * Creates a state with [initial] that needs no disposal and is independent of this scope.
-     */
-    public fun <T> state(initial: T): State<T> = StateImpl(initial)
 
     /**
      * Creates a lazy [de.ole101.lodestone.reactive.node.Derived] value. [compute] runs on the reading thread. Exceptions reach the reader.
