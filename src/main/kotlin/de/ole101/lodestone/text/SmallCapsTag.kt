@@ -18,7 +18,7 @@ internal object SmallCapsTag : Modifying {
         return converted.children(emptyList())
     }
 
-    private fun String.toSmallCaps(): String = String(CharArray(length) { this[it].toSmallCap() })
+    private fun String.toSmallCaps() = String(CharArray(length) { this[it].toSmallCap() })
 
     private fun Char.toSmallCap(): Char {
         val lower = lowercaseChar()

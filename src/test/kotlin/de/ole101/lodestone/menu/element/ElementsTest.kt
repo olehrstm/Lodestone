@@ -4,7 +4,7 @@ import de.ole101.lodestone.menu.async.Resource
 import de.ole101.lodestone.menu.async.resource
 import de.ole101.lodestone.menu.create
 import de.ole101.lodestone.menu.layout.Axis
-import de.ole101.lodestone.menu.layout.MenuFonts
+import de.ole101.lodestone.menu.layout.MenuStyle
 import de.ole101.lodestone.menu.layout.SlotArea
 import de.ole101.lodestone.menu.menu
 import de.ole101.lodestone.menu.open
@@ -36,11 +36,11 @@ class ElementsTest :
         beforeSpec {
             TestServer.init()
             MinestomRegistries.bind()
-            MenuFonts.hoverTooltipStyle = "test:hover"
+            MenuStyle.configure("test:hover")
         }
 
         afterSpec {
-            MenuFonts.hoverTooltipStyle = null
+            MenuStyle.configure(null)
         }
 
         val amounts = (1..5).toList()
@@ -107,7 +107,7 @@ class ElementsTest :
             val glyph = Glyph(Key.key("test:ui"), 'a', 16)
             val session =
                 menu(rows = 1) {
-                    button(0, glyph, glyph, cooldown = 1.minutes) {
+                    button(0, ButtonGlyphs(glyph, glyph), cooldown = 1.minutes) {
                         onClick { log += "click" }
                         onDisabledClick { log += "disabled" }
                     }
@@ -152,7 +152,7 @@ class ElementsTest :
             var clicks = 0
             val session =
                 menu(rows = 1) {
-                    button(3..4, 0, glyph, glyph, cooldown = Duration.ZERO) { onClick { clicks++ } }
+                    button(3..4, 0, ButtonGlyphs(glyph, glyph), cooldown = Duration.ZERO) { onClick { clicks++ } }
                 }.open(player)
 
             EventDispatcher.call(InventoryPreClickEvent(session.inventory, player, Click.Left(3)))
@@ -168,7 +168,7 @@ class ElementsTest :
             val hover = Glyph(Key.key("test:hover"), 'h', 16, 18)
             val session =
                 menu(rows = 1) {
-                    button(0, glyph, glyph) { hover(hover) }
+                    button(0, ButtonGlyphs(glyph, glyph)) { hover(hover) }
                 }.create()
 
             val item = session.inventory.getItemStack(0)
@@ -228,7 +228,7 @@ class ElementsTest :
             val noWidth = Glyph(Key.key("test:ui"), 'a')
             val glyph = Glyph(Key.key("test:ui"), 'b', 16)
             shouldThrow<IllegalArgumentException> { menu(rows = 1) { cycle(0, emptyList<Int>()) { ItemStack.AIR } }.create() }
-            shouldThrow<IllegalArgumentException> { menu(rows = 1) { button(0, glyph, noWidth) {} }.create() }
+            shouldThrow<IllegalArgumentException> { menu(rows = 1) { button(0, ButtonGlyphs(glyph, noWidth)) {} }.create() }
             shouldThrow<IllegalArgumentException> { menu(rows = 1) { tabs(0) { tab(0, 0, noWidth) } }.create() }
         }
     })

@@ -4,15 +4,16 @@ import de.ole101.lodestone.menu.MenuDsl
 import de.ole101.lodestone.menu.MenuScope
 import de.ole101.lodestone.menu.layout.MenuType
 import de.ole101.lodestone.menu.layout.cell
-import de.ole101.lodestone.menu.layout.cellOf
-import de.ole101.lodestone.reactive.State
+import de.ole101.lodestone.menu.render.requireWidth
+import de.ole101.lodestone.reactive.node.State
 import de.ole101.lodestone.text.glyph.Glyph
 
 /**
  * Adds the tabs declared in [block], starting with [initial] active. A click on any slot of a tab activates it.
  * Tab glyphs are centered over their slots, also vertically when they have a [Glyph.height].
  * Show the content of the active tab with `key({ tabs.active }) { tab -> ... }`.
- * Throws [IllegalArgumentException] if a tab slot is outside the menu or a glyph has no width.
+ *
+ * @throws IllegalArgumentException if a tab slot is outside the menu or a glyph has no width.
  */
 public fun <K> MenuScope.tabs(
     initial: K,
@@ -20,14 +21,14 @@ public fun <K> MenuScope.tabs(
 ): Tabs<K> {
     val declared = TabsScope<K>(session.type).apply(block).tabs
     val tabs = Tabs(state(initial))
-    val slots = declared.map { tab -> spanSlots(tab.columns, tab.row) }
     val invisible = invisibleItem(null)
+    val slotsOf = declared.associateWith { spanSlots(it.columns, it.row) }
 
     element {
-        declared.forEachIndexed { index, tab ->
+        for (tab in declared) {
             spanGlyph(if (tabs.active == tab.key) tab.activeGlyph else tab.glyph, cell(tab.columns, tab.row))
-            for (slot in slots[index]) {
-                slot(slot) {
+            for (index in slotsOf.getValue(tab)) {
+                slot(index) {
                     item { invisible }
                     onClick { tabs.active = tab.key }
                 }
@@ -40,7 +41,9 @@ public fun <K> MenuScope.tabs(
 public class Tabs<K> internal constructor(
     active: State<K>,
 ) {
-    /** The key of the active tab. Reading it in an effect or element tracks it. */
+    /**
+     * The key of the active tab. Reading it in an effect or element tracks it.
+     */
     public var active: K by active
 }
 
@@ -52,7 +55,8 @@ public class TabsScope<K> internal constructor(
 
     /**
      * Adds a tab for [key], drawn as [glyph] over [slot], or as [activeGlyph] while it is active.
-     * Throws [IllegalArgumentException] if [slot] is outside the menu or a glyph has no width.
+     *
+     * @throws IllegalArgumentException if [slot] is outside the menu or a glyph has no width.
      */
     public fun tab(
         key: K,
@@ -61,7 +65,7 @@ public class TabsScope<K> internal constructor(
         activeGlyph: Glyph = glyph,
     ) {
         val (column, row) = type.cellOf(slot)
-        tab(key, column..column, row, glyph, activeGlyph)
+        tab(key, column, row, glyph, activeGlyph)
     }
 
     public fun tab(
@@ -74,7 +78,9 @@ public class TabsScope<K> internal constructor(
         tab(key, column..column, row, glyph, activeGlyph)
     }
 
-    /** Adds a tab for [key] that spans the slots in [columns] of [row], for glyphs wider than one slot. */
+    /**
+     * Adds a tab for [key] that spans the slots in [columns] of [row], for glyphs wider than one slot.
+     */
     public fun tab(
         key: K,
         columns: IntRange,
@@ -82,8 +88,8 @@ public class TabsScope<K> internal constructor(
         glyph: Glyph,
         activeGlyph: Glyph = glyph,
     ) {
-        requireWidth(glyph)
-        requireWidth(activeGlyph)
+        glyph.requireWidth()
+        activeGlyph.requireWidth()
         tabs += Tab(key, glyph, activeGlyph, columns, row)
     }
 

@@ -10,7 +10,9 @@ import kotlinx.coroutines.Job
  */
 public fun <T> MenuScope.resource(fetch: suspend () -> T): Resource<T> = Resource(this, fetch).also { it.refetch() }
 
-/** The result of an async fetch in a menu. Reading its properties in an effect or element tracks them. */
+/**
+ * The result of an async fetch in a menu. Reading its properties in an effect or element tracks them.
+ */
 public class Resource<T> internal constructor(
     private val scope: MenuScope,
     private val fetch: suspend () -> T,
@@ -20,29 +22,34 @@ public class Resource<T> internal constructor(
     public var loading: Boolean by scope.state(false)
         private set
 
-    /** The result of the last successful fetch, or null before the first one. Kept while refetching. */
+    /**
+     * The result of the last successful fetch, or null before the first one. Kept while refetching.
+     */
     public var value: T? by scope.state(null)
         private set
 
-    /** The exception of the last fetch, or null if it succeeded or is still running. */
+    /**
+     * The exception of the last fetch, or null if it succeeded or is still running.
+     */
     public var error: Throwable? by scope.state(null)
         private set
 
-    /** Cancels a running fetch and starts a new one. */
+    /**
+     * Cancels a running fetch and starts a new one.
+     */
     public fun refetch() {
         job?.cancel()
         loading = true
         error = null
-        job =
-            scope.launch {
-                try {
-                    value = fetch()
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    error = e
-                }
-                loading = false
+        job = scope.launch {
+            try {
+                value = fetch()
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                error = exception
             }
+            loading = false
+        }
     }
 }

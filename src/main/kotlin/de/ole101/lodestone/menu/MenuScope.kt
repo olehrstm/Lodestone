@@ -6,11 +6,11 @@ import de.ole101.lodestone.menu.render.Region
 import de.ole101.lodestone.menu.render.RenderScope
 import de.ole101.lodestone.menu.slot.ClickContext
 import de.ole101.lodestone.menu.slot.SlotPolicy
-import de.ole101.lodestone.reactive.Derived
-import de.ole101.lodestone.reactive.EffectScope
 import de.ole101.lodestone.reactive.ReactiveScope
-import de.ole101.lodestone.reactive.State
-import de.ole101.lodestone.reactive.untrack
+import de.ole101.lodestone.reactive.node.Derived
+import de.ole101.lodestone.reactive.node.EffectScope
+import de.ole101.lodestone.reactive.node.State
+import de.ole101.lodestone.reactive.node.untracked
 import de.ole101.lodestone.text.glyph.TextAlign
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -38,11 +38,11 @@ public class MenuScope internal constructor(
     private val region: Region,
     private val coroutineScope: CoroutineScope,
 ) {
-    /** The players viewing this menu. Reading it in an effect or element tracks it. */
-    public val viewers: Set<Player> get() = session.viewers
-
-    /** The current rename text of an anvil menu. See [MenuSession.anvilInput]. */
-    public val anvilInput: String get() = session.anvilInput
+    /**
+     * The players viewing this menu. Reading it in an effect or element tracks it.
+     */
+    public val viewers: Set<Player>
+        get() = session.viewers
 
     public fun <T> state(initial: T): State<T> = reactive.state(initial)
 
@@ -56,7 +56,9 @@ public class MenuScope internal constructor(
         reactive.effect(block)
     }
 
-    /** Adds an element that draws with [render]. It renders again whenever a state it read changes. */
+    /**
+     * Adds an element that draws with [render]. It renders again whenever a state it read changes.
+     */
     public fun element(render: RenderScope.() -> Unit) {
         val entry = Region.ElementEntry()
         region.entries += entry
@@ -64,25 +66,23 @@ public class MenuScope internal constructor(
         reactive.preEffect {
             val scope = RenderScope(session, coroutineScope, this)
             scope.render()
-            entry.slots = scope.slots
-            entry.layers = scope.layers
-            entry.playerSlots = scope.playerSlots
+            entry.output = scope
             session.markDirty()
 
             onCleanup {
-                entry.slots = emptyMap()
-                entry.layers = emptyList()
-                entry.playerSlots = emptyMap()
+                entry.output = null
                 session.markDirty()
             }
         }
     }
 
     public fun element(element: MenuElement) {
-        this.element { with(element) { render() } }
+        element { with(element) { render() } }
     }
 
-    /** Shows the elements of [block] while [condition] returns true. The block is set up again each time it shows. */
+    /**
+     * Shows the elements of [block] while [condition] returns true. The block is set up again each time it shows.
+     */
     public fun show(
         condition: () -> Boolean,
         block: MenuScope.() -> Unit,
@@ -100,19 +100,19 @@ public class MenuScope internal constructor(
     ) {
         val entry = Region.BlockEntry()
         region.entries += entry
-        var mounted: Mounted? = null
+        var mounted: Mounted<K>? = null
         // Derived skips equal values, so the block is only set up again when the value really changes
         val key = reactive.derived(value)
 
         reactive.preEffect {
             val current = key.value
-            untrack {
+            untracked {
                 mounted?.scope?.dispose()
-                mounted = null
+                // Stays empty if the new block throws during setup
                 entry.regions = emptyList()
                 session.markDirty()
 
-                val next = mount { block(current) }
+                val next = mount(current, block)
                 mounted = next
                 entry.regions = listOf(next.region)
             }
@@ -129,19 +129,18 @@ public class MenuScope internal constructor(
     ) {
         val entry = Region.BlockEntry()
         region.entries += entry
-        var mounted: List<Pair<T, Mounted>> = emptyList()
+        var mounted: List<Mounted<T>> = emptyList()
 
         reactive.preEffect {
             val current = items()
-            untrack {
+            untracked {
                 val unused = mounted.toMutableList()
-                mounted =
-                    current.map { item ->
-                        val index = unused.indexOfFirst { it.first == item }
-                        if (index >= 0) unused.removeAt(index) else item to mount { block(item) }
-                    }
-                unused.forEach { it.second.scope.dispose() }
-                entry.regions = mounted.map { it.second.region }
+                mounted = current.map { item ->
+                    val index = unused.indexOfFirst { it.key == item }
+                    if (index >= 0) unused.removeAt(index) else mount(item, block)
+                }
+                unused.forEach { it.scope.dispose() }
+                entry.regions = mounted.map { it.region }
                 session.markDirty()
             }
         }
@@ -172,7 +171,7 @@ public class MenuScope internal constructor(
     }
 
     public fun onOpen(hook: (viewer: Player) -> Unit) {
-        addHook(session.openHooks, hook)
+        addHook(session.hooks.open, hook)
     }
 
     /**
@@ -180,7 +179,7 @@ public class MenuScope internal constructor(
      * at the start of the next tick.
      */
     public fun onClose(hook: (viewer: Player, reason: CloseReason) -> Unit) {
-        addHook(session.closeHooks, hook)
+        addHook(session.hooks.close, hook)
     }
 
     /**
@@ -188,17 +187,7 @@ public class MenuScope internal constructor(
      * [ClickContext.isCancelled]. Drags and double clicks involve several slots and reach no hook.
      */
     public fun onClick(hook: (ClickContext) -> Unit) {
-        addHook(session.clickHooks, hook)
-    }
-
-    /**
-     * Ignores clicks on menu slots that a player makes within [cooldown] after their last accepted click.
-     * They are cancelled and reach no handler. Applies to the whole session, also when called in a block, and replaces an
-     * earlier cooldown. There is none by default. Throws [IllegalArgumentException] if [cooldown] is negative.
-     */
-    public fun clickCooldown(cooldown: Duration) {
-        require(!cooldown.isNegative()) { "Click cooldown must not be negative, but was $cooldown" }
-        session.clickCooldown = cooldown
+        addHook(session.hooks.click, hook)
     }
 
     /**
@@ -207,7 +196,7 @@ public class MenuScope internal constructor(
      * Shift clicks move items only into [SlotPolicy.PLACE] and [SlotPolicy.FREE] slots that accept them.
      */
     public fun onPlayerInventoryClick(hook: (ClickContext) -> Unit) {
-        addHook(session.playerInventoryClickHooks, hook)
+        addHook(session.hooks.playerInventoryClick, hook)
     }
 
     /**
@@ -216,12 +205,26 @@ public class MenuScope internal constructor(
      * [ClickContext.isCancelled].
      */
     public fun onOutsideClick(hook: (ClickContext) -> Unit) {
-        addHook(session.outsideClickHooks, hook)
+        addHook(session.hooks.outsideClick, hook)
     }
 
-    /** Runs [hook] at the start of every tick while the session exists. */
+    /**
+     * Runs [hook] at the start of every tick while the session exists.
+     */
     public fun onTick(hook: () -> Unit) {
-        addHook(session.tickHooks, hook)
+        addHook(session.hooks.tick, hook)
+    }
+
+    /**
+     * Ignores clicks on menu slots that a player makes within [cooldown] after their last accepted click.
+     * They are cancelled and reach no handler. Applies to the whole session, also when called in a block, and replaces an
+     * earlier cooldown. There is none by default.
+     *
+     * @throws IllegalArgumentException if [cooldown] is negative.
+     */
+    public fun clickCooldown(cooldown: Duration) {
+        require(!cooldown.isNegative()) { "Click cooldown must not be negative, but was $cooldown" }
+        session.clicks.cooldown.duration = cooldown
     }
 
     private fun <H> addHook(
@@ -232,17 +235,22 @@ public class MenuScope internal constructor(
         reactive.onDispose { hooks -= hook }
     }
 
-    private fun mount(block: MenuScope.() -> Unit): Mounted {
+    private fun <K> mount(
+        key: K,
+        block: MenuScope.(K) -> Unit,
+    ): Mounted<K> {
         val child = reactive.child()
         val childRegion = Region()
-        val childCoroutines = CoroutineScope(coroutineScope.coroutineContext + SupervisorJob(coroutineScope.coroutineContext.job))
+        val parentContext = coroutineScope.coroutineContext
+        val childCoroutines = CoroutineScope(parentContext + SupervisorJob(parentContext.job))
         child.onDispose { childCoroutines.cancel() }
 
-        MenuScope(session, child, childRegion, childCoroutines).block()
-        return Mounted(child, childRegion)
+        MenuScope(session, child, childRegion, childCoroutines).block(key)
+        return Mounted(key, child, childRegion)
     }
 
-    private class Mounted(
+    private class Mounted<K>(
+        val key: K,
         val scope: ReactiveScope,
         val region: Region,
     )

@@ -7,6 +7,7 @@ import de.ole101.lodestone.menu.MenuScope
 import de.ole101.lodestone.menu.MenuSession
 import de.ole101.lodestone.menu.layout.MenuType
 import de.ole101.lodestone.menu.menu
+import de.ole101.lodestone.menu.slot.SlotScope
 import net.kyori.adventure.text.Component
 import net.minestom.server.component.DataComponents
 import net.minestom.server.entity.Player
@@ -16,9 +17,10 @@ import net.minestom.server.item.Material
 
 /**
  * Creates an anvil input blueprint with [initial] text and actions configured by [block]. Each open creates its own
- * input session. See [AnvilInputScope] for confirmation, validation, and custom artwork.
- * Throws [IllegalStateException] if [block] registers no confirmation handler. The block runs on the tick thread
- * during session creation, and its exceptions reach the caller.
+ * input session. See [AnvilInputScope] for confirmation, validation, and custom artwork. The block runs on the tick
+ * thread during session creation, and its exceptions reach the caller.
+ *
+ * @throws IllegalStateException if [block] registers no confirmation handler.
  */
 public fun anvilInput(
     initial: String = "",
@@ -26,12 +28,14 @@ public fun anvilInput(
 ): MenuBlueprint<Unit> = menu(MenuType.ANVIL) { anvilInput(initial, block) }
 
 /**
- * Configures this anvil's rename field with [initial] text, which [MenuSession.anvilInput] reports filtered and trimmed, a cancel action in slot 0, and confirmation in slot 2.
- * Slot 1 is left empty. Actions react to left clicks only and never move items or consume experience. Cancelling or
- * successfully confirming goes back when possible, otherwise closes the inventory. The handler runs after that, so it
- * can open another menu.
- * Throws [IllegalStateException] if this is not an anvil, input was already configured, or no confirmation handler
- * was registered. [block] runs during setup on the tick thread, and its exceptions reach the caller.
+ * Configures this anvil's rename field with [initial] text, which [MenuSession.anvilInput] reports filtered and
+ * trimmed, a cancel action in slot 0, and confirmation in slot 2. Slot 1 is left empty. Actions react to left clicks
+ * only and never move items or consume experience. Cancelling or successfully confirming goes back when possible,
+ * otherwise closes the inventory. The handler runs after that, so it can open another menu. [block] runs during setup
+ * on the tick thread, and its exceptions reach the caller.
+ *
+ * @throws IllegalStateException if this is not an anvil, input was already configured, or no confirmation handler
+ * was registered.
  */
 public fun MenuScope.anvilInput(
     initial: String = "",
@@ -40,38 +44,28 @@ public fun MenuScope.anvilInput(
     check(session.type == MenuType.ANVIL) { "Anvil input requires ANVIL, but was ${session.type}" }
     val input = AnvilInputScope().apply(block)
     val confirm = checkNotNull(input.confirm) { "Anvil input needs an onConfirm handler" }
-    session.initializeAnvilInput(initial)
+    session.anvil.configure(initial)
     input.layout?.invoke(this)
 
     slot(0) {
         // A negative repair cost makes the client predict a cost of 0 while typing, so it shows no cost label
-        item { input.cancelItem().withCustomName(Component.text(initial)).with(DataComponents.REPAIR_COST, NO_COST) }
-        onClick { click ->
-            if (click.click !is Click.Left) return@onClick
-            session.finishAnvilInput(click.player)
-            input.cancel?.invoke(click.player)
+        item { input.cancelItem().withCustomName(Component.text(initial)).with(DataComponents.REPAIR_COST, -1_000_000) }
+        onLeftClick { player ->
+            session.finishAnvilInput(player)
+            input.cancel?.invoke(player)
         }
     }
     slot(2) {
         item { input.confirmItem() }
-        onClick { click ->
-            if (click.click !is Click.Left) return@onClick
+        onLeftClick { player ->
             val text = session.anvilInput
-            if (!input.accepts(text)) return@onClick
-            session.finishAnvilInput(click.player)
-            confirm(click.player, text)
+            if (!input.accepts(text)) return@onLeftClick
+            session.finishAnvilInput(player)
+            confirm(player, text)
         }
     }
 }
 
-private const val NO_COST = -1_000_000
-
-// Leaves the input before its handler runs, so the handler can open another menu
-private fun MenuSession.finishAnvilInput(player: Player) {
-    if (!goBack(player)) player.closeInventory()
-}
-
-/** Configures an anvil input's actions and appearance. */
 @MenuDsl
 public class AnvilInputScope internal constructor() {
     internal var confirm: ((Player, String) -> Unit)? = null
@@ -79,15 +73,15 @@ public class AnvilInputScope internal constructor() {
     internal var accepts: (String) -> Boolean = { true }
     internal var layout: (MenuScope.() -> Unit)? = null
     internal var cancelItem: () -> ItemStack = {
-        item(Material.ARROW) { noTooltip() }
+        item(Material.ARROW) { hideTooltip() }
     }
     internal var confirmItem: () -> ItemStack = {
         item(Material.LIME_DYE) { customName(Component.text("Confirm")) }
     }
 
     /**
-     * Runs [handler] with the latest text when confirmation is clicked and validation passes, after the input was left.
-     * Runs on the clicking player's tick thread. Exceptions reach the event dispatcher.
+     * Runs [handler] with the latest text when confirmation is clicked and validation passes, after the input was
+     * left. Runs on the clicking player's tick thread. Exceptions reach the event dispatcher.
      */
     public fun onConfirm(handler: (Player, String) -> Unit) {
         confirm = handler
@@ -124,19 +118,31 @@ public class AnvilInputScope internal constructor() {
      * during rendering. Exceptions, including [IllegalArgumentException] for air items, go to the exception manager.
      */
     public fun cancelItem(block: () -> ItemStack) {
-        cancelItem = {
-            block().also { require(!it.isAir) { "Anvil cancel item must not be air" } }
-        }
+        cancelItem = nonAir("cancel", block)
     }
 
     /**
-     * Uses the item returned by [block] for the right action. Must return a non-air item to provide a clickable result.
-     * Runs on the tick thread during rendering. Exceptions, including [IllegalArgumentException] for air items,
-     * go to the exception manager.
+     * Uses the item returned by [block] for the right action. Must return a non-air item to provide a clickable
+     * result. Runs on the tick thread during rendering. Exceptions, including [IllegalArgumentException] for air
+     * items, go to the exception manager.
      */
     public fun confirmItem(block: () -> ItemStack) {
-        confirmItem = {
-            block().also { require(!it.isAir) { "Anvil confirm item must not be air" } }
-        }
+        confirmItem = nonAir("confirm", block)
     }
+}
+
+private fun nonAir(
+    name: String,
+    block: () -> ItemStack,
+): () -> ItemStack = {
+    block().also { require(!it.isAir) { "Anvil $name item must not be air" } }
+}
+
+private fun SlotScope.onLeftClick(handler: (Player) -> Unit) = onClick { click ->
+    if (click.click is Click.Left) handler(click.player)
+}
+
+// Leaves the input before its handler runs, so the handler can open another menu
+private fun MenuSession.finishAnvilInput(player: Player) {
+    if (!goBack(player)) player.closeInventory()
 }

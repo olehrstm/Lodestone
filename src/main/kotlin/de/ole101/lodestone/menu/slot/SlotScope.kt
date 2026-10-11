@@ -23,7 +23,9 @@ public class SlotScope internal constructor(
     public val session: MenuSession,
     private val coroutineScope: CoroutineScope,
 ) {
-    /** What players may do with the item in this slot. Defaults to [SlotPolicy.LOCKED]. */
+    /**
+     * What players may do with the item in this slot. Defaults to [SlotPolicy.LOCKED].
+     */
     public var policy: SlotPolicy = SlotPolicy.LOCKED
 
     private var item: ItemStack = ItemStack.AIR
@@ -47,7 +49,9 @@ public class SlotScope internal constructor(
         onClick = handler
     }
 
-    /** Lets players only place items for which [predicate] returns true. Only matters with [SlotPolicy.PLACE] or [SlotPolicy.FREE]. */
+    /**
+     * Lets players only place items for which [predicate] returns true. Only matters with [SlotPolicy.PLACE] or [SlotPolicy.FREE].
+     */
     public fun accepts(predicate: (ItemStack) -> Boolean) {
         accepts = predicate
     }
@@ -70,7 +74,7 @@ public class SlotScope internal constructor(
         block: suspend CoroutineScope.() -> Unit,
     ): Job = coroutineScope.launch(context, start, block)
 
-    internal fun build(): SlotView = SlotView(item, policy, onClick, accepts, onChange)
+    internal fun build() = SlotView(item, policy, onClick, accepts, onChange)
 }
 
 internal class SlotView(
@@ -80,3 +84,6 @@ internal class SlotView(
     val accepts: (ItemStack) -> Boolean,
     val onChange: ((ItemStack, ItemStack) -> Unit)?,
 )
+
+internal val SlotView?.isInput
+    get() = this?.policy?.canPlace == true

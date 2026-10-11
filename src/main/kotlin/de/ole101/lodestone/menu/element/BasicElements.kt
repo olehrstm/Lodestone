@@ -2,27 +2,22 @@ package de.ole101.lodestone.menu.element
 
 import de.ole101.lodestone.item.item
 import de.ole101.lodestone.menu.MenuScope
-import de.ole101.lodestone.menu.layout.MenuFonts
 import de.ole101.lodestone.menu.layout.MenuMetrics
+import de.ole101.lodestone.menu.layout.MenuStyle
 import de.ole101.lodestone.menu.layout.Position
 import de.ole101.lodestone.menu.layout.VAlign
-import de.ole101.lodestone.menu.layout.cell
-import de.ole101.lodestone.menu.layout.checkSlot
-import de.ole101.lodestone.menu.layout.guiHeight
 import de.ole101.lodestone.menu.layout.px
-import de.ole101.lodestone.menu.layout.slotIndex
-import de.ole101.lodestone.menu.layout.slotY
+import de.ole101.lodestone.menu.layout.requireColumns
+import de.ole101.lodestone.menu.layout.requirePlayerSlot
 import de.ole101.lodestone.menu.render.RenderScope
-import de.ole101.lodestone.menu.render.requirePlayerSlot
+import de.ole101.lodestone.menu.render.centeredVertically
+import de.ole101.lodestone.menu.render.requireHeight
+import de.ole101.lodestone.menu.render.requireWidth
 import de.ole101.lodestone.menu.slot.SlotScope
 import de.ole101.lodestone.text.glyph.Glyph
-import de.ole101.lodestone.text.glyph.SHADER_HIDDEN_COLOR
 import de.ole101.lodestone.text.glyph.TextAlign
-import de.ole101.lodestone.text.glyph.space
-import de.ole101.lodestone.text.pixelWidth
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
-import net.kyori.adventure.text.format.ShadowColor
 import net.kyori.adventure.text.format.TextColor
 import net.minestom.server.component.DataComponents
 import net.minestom.server.item.ItemStack
@@ -30,7 +25,9 @@ import net.minestom.server.item.Material
 
 /**
  * Adds the slot at [index], configured by [block]. The block runs again whenever a state it read changes, for
- * example inside `item { }`. Throws [IllegalArgumentException] if [index] is outside the menu.
+ * example inside `item { }`.
+ *
+ * @throws IllegalArgumentException if [index] is outside the menu.
  */
 public fun MenuScope.slot(
     index: Int,
@@ -51,8 +48,8 @@ public fun MenuScope.slot(
 /**
  * Adds a slot of each viewer's own inventory at [column] and [row], shown instead of their item while the menu is
  * open. Rows 0 to 2 are the main inventory from the top and row 3 is the hotbar.
- * Throws [IllegalArgumentException] if the slot is outside 9 by 4.
  *
+ * @throws IllegalArgumentException if the slot is outside 9 by 4.
  * @see RenderScope.playerSlot
  */
 public fun MenuScope.playerSlot(
@@ -65,12 +62,13 @@ public fun MenuScope.playerSlot(
 }
 
 /**
- * Draws [glyph] in the title at [at], aligned with [align] and, inside a cell, [vAlign], tinted with [color]. Throws
- * [IllegalArgumentException] if the glyph has no [Glyph.width], or no [Glyph.height] when [vAlign] is not [VAlign.TOP].
+ * Draws [glyph] in the title at [at], aligned with [align] and, inside a cell, [vAlign], tinted with [color].
  * Requires the GUI text shader that decodes relative shadow markers. Tint is quantized to RGB332. Rendering throws
  * [IllegalArgumentException] if the vertical offset, including the ascent correction, is outside `-2048..2047`.
  *
- * @see de.ole101.lodestone.menu.render.RenderScope.glyph
+ * @throws IllegalArgumentException if the glyph has no [Glyph.width], or no [Glyph.height] when [vAlign] is not
+ * [VAlign.TOP].
+ * @see RenderScope.glyph
  */
 public fun MenuScope.overlay(
     glyph: Glyph,
@@ -79,8 +77,8 @@ public fun MenuScope.overlay(
     vAlign: VAlign = VAlign.TOP,
     color: TextColor = NamedTextColor.WHITE,
 ) {
-    requireWidth(glyph)
-    require(vAlign == VAlign.TOP || glyph.height != null) { "Glyph needs a height to be aligned $vAlign, but $glyph has none" }
+    glyph.requireWidth()
+    glyph.requireHeight(vAlign)
     element { glyph(glyph, at, align, vAlign, color) }
 }
 
@@ -88,12 +86,13 @@ public fun MenuScope.overlay(
  * Draws a full-width sprite behind rows of the menu. [glyph] returns the sprite for each row, counted from 0, or null
  * to leave the row as it is. Each sprite's top-left corner is at the left edge of the menu and the top of the row's
  * slots, so it fits sprites as wide as [MenuMetrics.GUI_WIDTH]. Call it before other overlays to draw it below them.
- * Throws [IllegalArgumentException] if a glyph has no [Glyph.width].
+ *
+ * @throws IllegalArgumentException if a glyph has no [Glyph.width].
  */
 public fun MenuScope.rowOverlays(glyph: (row: Int) -> Glyph?) {
     for (row in 0 until session.type.rows) {
         val rowGlyph = glyph(row) ?: continue
-        overlay(rowGlyph, px(0, session.type.slotY(row)))
+        overlay(rowGlyph, px(0, session.type.gui.slotY(row)))
     }
 }
 
@@ -102,7 +101,7 @@ public fun MenuScope.rowOverlays(glyph: (row: Int) -> Glyph?) {
  * Requires the GUI text shader for relative shadow markers. Colors use RGB332 precision and replace normal shadows.
  * Rendering throws [IllegalArgumentException] if the vertical offset is outside `-2048..2047`.
  *
- * @see de.ole101.lodestone.menu.render.RenderScope.text
+ * @see RenderScope.text
  */
 public fun MenuScope.text(
     at: Position,
@@ -113,7 +112,9 @@ public fun MenuScope.text(
     element { text(at, align, vAlign, text) }
 }
 
-/** Draws [glyph] centered over the cells [at], also vertically when the glyph has a height. */
+/**
+ * Draws [glyph] centered over the cells [at], also vertically when the glyph has a height.
+ */
 internal fun RenderScope.spanGlyph(
     glyph: Glyph,
     at: Position,
@@ -121,79 +122,33 @@ internal fun RenderScope.spanGlyph(
     glyph(glyph, at, TextAlign.CENTER, glyph.centeredVertically())
 }
 
-/**
- * Returns the start of a tooltip that shows [glyph], a hover sprite with shader data rows,
- * centered over the cells [at] while the item is hovered. [tooltip] is the rest of the tooltip's first line.
- *
- * It needs text shaders in your resource pack that read this data. The glyph itself is drawn in [SHADER_HIDDEN_COLOR], which
- * the shader hides. Its shadow carries the data. Red and green are the sprite's top-left corner relative to the
- * screen center plus 128, blue and the top 3 bits of alpha are the tooltip width, and the low 5 bits of alpha are the number
- * of tooltip lines. The shader draws the shadow at the target and cuts out the part behind the tooltip.
- */
-internal fun RenderScope.hoverSprite(
-    glyph: Glyph,
-    at: Position,
-    tooltip: Component?,
-): Component {
-    val (x, y) = glyphPosition(glyph, at, TextAlign.CENTER, glyph.centeredVertically())
-    // The client centers the GUI on the screen, so its center is the screen center
-    val dx = x - MenuMetrics.GUI_WIDTH / 2 + 128
-    val dy = y - session.type.guiHeight / 2 + 128
-    require(dx in 0..255 && dy in 0..255) { "Hover sprites must start within 128 pixels of the GUI center, but $glyph is at $x, $y" }
-
-    val width = (tooltip?.pixelWidth() ?: 0).coerceIn(0, 2047)
-    val lines = 1
-    val shadow = ShadowColor.shadowColor(dx, dy, width and 0xFF, ((width shr 8) shl 5) or lines)
-
-    // Cancels the glyph's advance, so the tooltip text after it starts where the line starts
-    val advance = requireNotNull(glyph.width) + 1
-    return Component
-        .text()
-        .append(glyph.asComponent().color(SHADER_HIDDEN_COLOR).shadowColor(shadow))
-        .append(space(-advance))
-        .build()
-}
-
-private fun Glyph.centeredVertically(): VAlign = if (height != null) VAlign.MIDDLE else VAlign.TOP
-
 internal fun MenuScope.spanSlots(
     columns: IntRange,
     row: Int,
 ): List<Int> {
-    cell(columns, row)
+    requireColumns(columns)
     return columns.map { column -> session.type.slotIndex(column, row) }
 }
 
 internal fun invisibleItem(
     tooltip: Component?,
     hover: Component? = null,
-): ItemStack =
-    item(Material.PAPER) {
-        itemModel("minecraft:air")
-        when {
-            hover != null -> {
-                customName(
-                    Component
-                        .text()
-                        .append(hover)
-                        .append(tooltip ?: Component.empty())
-                        .build(),
-                )
-                // A tooltip that only carries the hover sprite draws no box, with the pack's transparent tooltip style
-                val style = MenuFonts.hoverTooltipStyle
-                if (tooltip == null && style != null) data(DataComponents.TOOLTIP_STYLE, style)
-            }
+): ItemStack = item(Material.PAPER) {
+    itemModel("minecraft:air")
+    when {
+        hover != null -> {
+            customName(Component.textOfChildren(hover, tooltip ?: Component.empty()))
+            // A tooltip that only carries the hover sprite draws no box, with the pack's transparent tooltip style
+            val style = MenuStyle.hoverTooltipStyle
+            if (tooltip == null && style != null) data(DataComponents.TOOLTIP_STYLE, style)
+        }
 
-            tooltip != null -> {
-                customName(tooltip)
-            }
+        tooltip != null -> {
+            customName(tooltip)
+        }
 
-            else -> {
-                noTooltip()
-            }
+        else -> {
+            hideTooltip()
         }
     }
-
-internal fun requireWidth(glyph: Glyph) {
-    requireNotNull(glyph.width) { "Glyph needs a width to be drawn in a menu, but $glyph has none" }
 }

@@ -5,8 +5,9 @@ import net.minestom.server.entity.Player
 
 /**
  * Creates a reusable chest menu with [rows] rows of 9 slots. [setup] runs once per [MenuSession], with the props passed
- * to [MenuBlueprint.create]. Throws [IllegalArgumentException] if [rows] is outside `1..6`.
+ * to [MenuBlueprint.create].
  *
+ * @throws IllegalArgumentException if [rows] is outside `1..6`.
  * @see MenuScope
  */
 public fun <P> menu(
@@ -14,18 +15,28 @@ public fun <P> menu(
     setup: MenuScope.(props: P) -> Unit,
 ): MenuBlueprint<P> = MenuBlueprint(MenuType.chest(rows), setup)
 
+/**
+ * Creates a reusable chest menu with [rows] rows of 9 slots. [setup] runs once per [MenuSession].
+ *
+ * @throws IllegalArgumentException if [rows] is outside `1..6`.
+ * @see MenuScope
+ */
 public fun menu(
     rows: Int = 6,
     setup: MenuScope.() -> Unit,
 ): MenuBlueprint<Unit> = MenuBlueprint(MenuType.chest(rows)) { setup() }
 
-/** Creates a reusable menu of [type], running [setup] once per session with its props on the tick thread. */
+/**
+ * Creates a reusable menu of [type], running [setup] once per session with its props on the tick thread.
+ */
 public fun <P> menu(
     type: MenuType,
     setup: MenuScope.(props: P) -> Unit,
 ): MenuBlueprint<P> = MenuBlueprint(type, setup)
 
-/** Creates a reusable menu of [type], running [setup] once per session on the tick thread. */
+/**
+ * Creates a reusable menu of [type], running [setup] once per session on the tick thread.
+ */
 public fun menu(
     type: MenuType,
     setup: MenuScope.() -> Unit,
@@ -36,7 +47,7 @@ public fun menu(
  * sessions at once. Create a blueprint with [menu].
  */
 public class MenuBlueprint<P> internal constructor(
-    public val type: MenuType,
+    private val type: MenuType,
     private val setup: MenuScope.(P) -> Unit,
 ) {
     /**
@@ -53,38 +64,35 @@ public class MenuBlueprint<P> internal constructor(
         player: Player,
         props: P,
     ): MenuSession = create(props).also { it.open(player) }
-
-    public fun open(
-        player: Player,
-        props: P,
-        back: MenuSession,
-    ): MenuSession = create(props).also { it.open(player, back) }
 }
 
 public fun MenuBlueprint<Unit>.create(disposePolicy: DisposePolicy = DisposePolicy.WHEN_EMPTY): MenuSession = create(Unit, disposePolicy)
 
 public fun MenuBlueprint<Unit>.open(player: Player): MenuSession = open(player, Unit)
 
-public fun MenuBlueprint<Unit>.open(
-    player: Player,
-    back: MenuSession,
-): MenuSession = open(player, Unit, back)
-
 public enum class DisposePolicy {
-    /** When its last viewer leaves and no player can come back to it (see [CloseReason.NAVIGATED]). */
+    /**
+     * When its last viewer leaves and no player can come back to it (see [CloseReason.NAVIGATED]).
+     */
     WHEN_EMPTY,
 
-    /** Only by [MenuSession.dispose]. The session keeps its state while nobody views it, so it can be opened again. */
+    /**
+     * Only by [MenuSession.dispose]. The session keeps its state while nobody views it, so it can be opened again.
+     */
     MANUAL,
 }
 
 public enum class CloseReason {
     PLAYER,
 
-    /** The server closed it, for example with [MenuSession.close]. */
+    /**
+     * The server closed it, for example with [MenuSession.close].
+     */
     SERVER,
 
-    /** The player opened another inventory. */
+    /**
+     * The player opened another inventory.
+     */
     REPLACED,
 
     /**

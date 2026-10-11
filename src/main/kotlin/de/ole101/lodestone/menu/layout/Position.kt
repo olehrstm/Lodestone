@@ -21,7 +21,15 @@ public sealed interface Position {
     ) : Position
 }
 
-/** Returns the point [x], [y] in GUI pixels from the top-left corner of the menu. */
+public enum class VAlign {
+    TOP,
+    MIDDLE,
+    BOTTOM,
+}
+
+/**
+ * Returns the point [x], [y] in GUI pixels from the top-left corner of the menu.
+ */
 public fun px(
     x: Int,
     y: Int,
@@ -29,7 +37,8 @@ public fun px(
 
 /**
  * Returns the slot at [column] and [row], both counted from 0.
- * Throws [IllegalArgumentException] if [column] is outside `0..8` or [row] is negative.
+ *
+ * @throws IllegalArgumentException if [column] is outside `0..8` or [row] is negative.
  */
 public fun cell(
     column: Int,
@@ -38,22 +47,23 @@ public fun cell(
 
 /**
  * Returns the slots in [columns] of [row], for example `cell(0..8, 5)` for the whole sixth row.
- * Throws [IllegalArgumentException] if [columns] is empty or outside `0..8`, or [row] is negative.
+ *
+ * @throws IllegalArgumentException if [columns] is empty or outside `0..8`, or [row] is negative.
  */
 public fun cell(
     columns: IntRange,
     row: Int,
 ): Position {
-    require(!columns.isEmpty() && columns.first >= 0 && columns.last <= 8) {
-        "Columns must be a non-empty range within 0..8, but were $columns"
-    }
+    requireColumns(columns)
     require(row >= 0) { "Row must not be negative, but was $row" }
     return Position.Cell(columns, row)
 }
 
 /**
  * Returns the slot at [column] and [row] of the viewer's own inventory. Rows 0 to 2 are the main inventory from the
- * top and row 3 is the hotbar. Throws [IllegalArgumentException] if the slot is outside 9 by 4.
+ * top and row 3 is the hotbar.
+ *
+ * @throws IllegalArgumentException if the slot is outside 9 by 4.
  */
 public fun playerCell(
     column: Int,
@@ -62,21 +72,31 @@ public fun playerCell(
 
 /**
  * Returns the slots in [columns] of [row] of the viewer's own inventory. See the `playerCell` overload with one column.
- * Throws [IllegalArgumentException] if [columns] is empty or outside `0..8`, or [row] is outside `0..3`.
+ *
+ * @throws IllegalArgumentException if [columns] is empty or outside `0..8`, or [row] is outside `0..3`.
  */
 public fun playerCell(
     columns: IntRange,
     row: Int,
 ): Position {
-    require(!columns.isEmpty() && columns.first >= 0 && columns.last <= 8) {
-        "Columns must be a non-empty range within 0..8, but were $columns"
-    }
-    require(row in 0..3) { "Player inventory row must be within 0..3, but was $row" }
+    requireColumns(columns)
+    requirePlayerRow(row)
     return Position.PlayerCell(columns, row)
 }
 
-public enum class VAlign {
-    TOP,
-    MIDDLE,
-    BOTTOM,
+private const val MAX_COLUMNS = 9
+
+internal fun requireColumns(columns: IntRange) = require(!columns.isEmpty() && columns.first >= 0 && columns.last < MAX_COLUMNS) {
+    "Columns must be a non-empty range within 0..8, but were $columns"
 }
+
+internal fun requirePlayerSlot(
+    column: Int,
+    row: Int,
+) {
+    require(column in 0 until PlayerInventoryLayout.COLUMNS) { "Player inventory column must be within 0..8, but was $column" }
+    requirePlayerRow(row)
+}
+
+internal fun requirePlayerRow(row: Int) =
+    require(row in 0 until PlayerInventoryLayout.ROWS) { "Player inventory row must be within 0..3, but was $row" }

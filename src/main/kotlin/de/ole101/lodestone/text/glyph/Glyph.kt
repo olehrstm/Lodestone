@@ -11,8 +11,7 @@ import net.kyori.adventure.text.ComponentLike
  * A glyph is [ComponentLike], so it can be appended to other components directly. The component has no
  * color, so it inherits the color of its parent, which tints the glyph texture.
  *
- * Throws [IllegalArgumentException] if [width] or [height] is negative, or [ascent] is above [height].
- *
+ * @throws IllegalArgumentException if [width] or [height] is negative, or [ascent] is above [height].
  * @property width The rendered width in pixels, or null if unknown. Like every glyph, it moves the text cursor by `width + 1` pixels.
  * @property height The rendered height in pixels, or null if unknown. Only needed to align the glyph vertically.
  * @property ascent The `ascent` of the glyph's bitmap provider in the resource pack. Menus place the top of a

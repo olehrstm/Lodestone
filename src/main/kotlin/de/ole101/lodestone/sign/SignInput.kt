@@ -19,7 +19,10 @@ import net.minestom.server.utils.block.BlockUtils
 
 /**
  * Builds a [SignInput] that asks players for text through the sign editor. Call [SignInputBuilder.onInput] in
- * [block], or this throws [IllegalStateException]. Throws [IllegalArgumentException] for invalid lines.
+ * [block].
+ *
+ * @throws IllegalStateException if [block] sets no `onInput` handler.
+ * @throws IllegalArgumentException if [block] sets invalid lines.
  */
 public fun signInput(block: SignInputBuilder.() -> Unit): SignInput = SignInputBuilder().apply(block).build()
 
@@ -74,7 +77,9 @@ public class SignInput internal constructor(
     /**
      * Shows a fake sign 5 blocks above [player] and opens its editor. When the player closes the editor, the
      * real block comes back and the input handler runs. If [player] already has a sign input open, it is
-     * replaced and its handler never runs. Throws [IllegalStateException] if [player] is in no instance.
+     * replaced and its handler never runs.
+     *
+     * @throws IllegalStateException if [player] is in no instance.
      */
     public fun open(player: Player) {
         open(player, onClosed = {}, onReplaced = {})

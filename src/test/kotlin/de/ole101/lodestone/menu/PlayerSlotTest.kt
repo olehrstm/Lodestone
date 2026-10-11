@@ -1,5 +1,6 @@
 package de.ole101.lodestone.menu
 
+import de.ole101.lodestone.menu.element.ButtonGlyphs
 import de.ole101.lodestone.menu.element.overlay
 import de.ole101.lodestone.menu.element.playerButton
 import de.ole101.lodestone.menu.element.playerSlot
@@ -39,7 +40,7 @@ class PlayerSlotTest :
                     playerSlot(4, 3) { item { ItemStack.of(Material.EMERALD) } }
                 }.open(player)
 
-            val items = session.playerWindowItems(player)
+            val items = session.playerOverlay.windowItems(player)
             // Window 0 puts the main inventory at 9 to 35 and the hotbar at 36 to 44
             items[9] shouldBe ItemStack.of(Material.DIAMOND)
             items[40] shouldBe ItemStack.of(Material.EMERALD)
@@ -77,7 +78,7 @@ class PlayerSlotTest :
             var clicks = 0
             val session =
                 menu(rows = 3) {
-                    playerButton(4, 3, glyph, glyph) { onClick { clicks++ } }
+                    playerButton(4, 3, ButtonGlyphs(glyph, glyph)) { onClick { clicks++ } }
                     overlay(glyph, playerCell(0, 0))
                 }.open(player)
 

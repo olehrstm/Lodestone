@@ -21,11 +21,11 @@ class PromptTest :
             val player = fakePlayer()
             val session = menu(rows = 1) {}.open(player)
 
-            val token = session.beginPrompt(player)
+            val token = session.navigation.beginPrompt(player)
             session.viewers.shouldBeEmpty()
             session.isDisposed.shouldBeFalse()
 
-            session.endPrompt(player, token)
+            session.navigation.endPrompt(player, token)
             session.viewers shouldBe setOf(player)
             session.dispose()
         }
@@ -34,12 +34,12 @@ class PromptTest :
             val player = fakePlayer()
             val session = menu(rows = 1) {}.open(player)
 
-            val first = session.beginPrompt(player)
-            val second = session.beginPrompt(player)
-            session.endPrompt(player, first)
+            val first = session.navigation.beginPrompt(player)
+            val second = session.navigation.beginPrompt(player)
+            session.navigation.endPrompt(player, first)
             session.viewers.shouldBeEmpty()
 
-            session.endPrompt(player, second)
+            session.navigation.endPrompt(player, second)
             session.viewers shouldBe setOf(player)
             session.dispose()
         }
@@ -48,7 +48,7 @@ class PromptTest :
             val player = fakePlayer()
             val session = menu(rows = 1) {}.open(player)
 
-            session.beginPrompt(player)
+            session.navigation.beginPrompt(player)
             player.playerConnection.disconnect()
             schedulerManager.processTick()
 

@@ -3,7 +3,7 @@ package de.ole101.lodestone.menu
 import de.ole101.lodestone.menu.element.anvilInput
 import de.ole101.lodestone.menu.element.overlay
 import de.ole101.lodestone.menu.layout.px
-import de.ole101.lodestone.reactive.state
+import de.ole101.lodestone.reactive.node.state
 import de.ole101.lodestone.schedulerManager
 import de.ole101.lodestone.testing.MinestomRegistries
 import de.ole101.lodestone.testing.TestServer
@@ -58,7 +58,7 @@ class AnvilInputTest :
                 anvilInput {
                     onCancel { cancelled++ }
                     onConfirm { _, _ -> confirmed++ }
-                }.open(player, back = parent)
+                }.create().also { it.open(player, back = parent) }
             EventDispatcher.call(InventoryPreClickEvent(session.inventory, player, Click.Left(0)))
             cancelled shouldBe 1
             confirmed shouldBe 0
@@ -88,7 +88,7 @@ class AnvilInputTest :
             val session =
                 anvilInput("initial") {
                     layout {
-                        title { Component.text(anvilInput) }
+                        title { Component.text(session.anvilInput) }
                         overlay(Glyph(Key.key("test:background"), 'a', 176, 166), px(0, 0))
                     }
                     onConfirm { _, _ -> }
@@ -160,7 +160,7 @@ class AnvilInputTest :
             val player = fakePlayer()
             val input = anvilInput("initial") { onConfirm { _, _ -> } }.open(player)
             EventDispatcher.call(PlayerAnvilInputEvent(player, input.inventory, "retained"))
-            val child = menu(rows = 1) {}.open(player, back = input)
+            val child = menu(rows = 1) {}.create().also { it.open(player, back = input) }
             child.goBack(player) shouldBe true
             input[0].get(DataComponents.CUSTOM_NAME) shouldBe Component.text("retained")
             input.dispose()

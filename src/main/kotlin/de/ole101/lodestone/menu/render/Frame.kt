@@ -2,17 +2,19 @@ package de.ole101.lodestone.menu.render
 
 import de.ole101.lodestone.menu.layout.MenuMetrics
 import de.ole101.lodestone.menu.layout.MenuType
-import de.ole101.lodestone.menu.layout.titleX
 import de.ole101.lodestone.menu.slot.SlotView
 import de.ole101.lodestone.text.glyph.Glyph
 import de.ole101.lodestone.text.glyph.TextAlign
 import de.ole101.lodestone.text.glyph.glyphOverlay
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
+import net.minestom.server.item.ItemStack
 
 internal sealed interface TitleLayer {
     val x: Int
     val y: Int
+    val onTop: Boolean
+        get() = false
 
     data class GlyphLayer(
         val glyph: Glyph,
@@ -26,9 +28,12 @@ internal sealed interface TitleLayer {
         override val x: Int,
         override val y: Int,
         val align: TextAlign,
-        val onTop: Boolean = false,
+        override val onTop: Boolean = false,
     ) : TitleLayer
 }
+
+// The vanilla color of container titles
+private val TITLE_COLOR = TextColor.color(0x404040)
 
 internal class Frame(
     val slots: Map<Int, SlotView>,
@@ -36,65 +41,63 @@ internal class Frame(
     // Slots of the viewer's own inventory, by row-major index with the hotbar as row 3
     val playerSlots: Map<Int, SlotView> = emptyMap(),
 ) {
-    fun title(type: MenuType): Component =
-        glyphOverlay {
-            for (layer in layers) {
-                val x = layer.x - type.titleX
-                val y = layer.y - MenuMetrics.TITLE_Y
-                when (layer) {
-                    // A glyph with a smaller ascent draws lower than text, so it moves up by the difference
-                    is TitleLayer.GlyphLayer -> shaderGlyph(layer.glyph, x, y + layer.glyph.ascent - Glyph.DEFAULT_ASCENT, layer.color)
+    val playerItems
+        get() = playerSlots.mapValues { it.value.item }
 
-                    is TitleLayer.TextLayer -> shaderText(layer.text, x, y, layer.align)
-                }
+    fun itemAt(slot: Int): ItemStack = slots[slot]?.item ?: ItemStack.AIR
+
+    fun title(type: MenuType): Component = glyphOverlay(TITLE_COLOR) {
+        for (layer in layers) {
+            val x = layer.x - type.gui.titleX
+            val y = layer.y - MenuMetrics.TITLE_Y
+            when (layer) {
+                // A glyph with a smaller ascent draws lower than text, so it moves up by the difference
+                is TitleLayer.GlyphLayer -> glyph(layer.glyph, x, y + layer.glyph.ascent - Glyph.DEFAULT_ASCENT, layer.color)
+
+                is TitleLayer.TextLayer -> text(layer.text, x, y, layer.align)
             }
         }
+    }
 
     companion object {
-        val EMPTY: Frame = Frame(emptyMap(), emptyList())
+        val EMPTY = Frame(emptyMap(), emptyList())
     }
 }
 
-/** The ordered output of the elements and blocks of one menu scope. */
+/**
+ * The ordered output of the elements and blocks of one menu scope.
+ */
 internal class Region {
     val entries = mutableListOf<Entry>()
 
     sealed interface Entry
 
     class ElementEntry : Entry {
-        var slots: Map<Int, SlotView> = emptyMap()
-        var layers: List<TitleLayer> = emptyList()
-        var playerSlots: Map<Int, SlotView> = emptyMap()
+        // The last render of the element, or null while it has none
+        var output: RenderScope? = null
     }
 
     class BlockEntry : Entry {
         var regions: List<Region> = emptyList()
     }
 
-    /** Builds a frame in declaration order. Later slots win, later layers draw on top, and the title draws last. */
+    /**
+     * Builds a frame in declaration order. Later slots win, later layers draw on top, and the title draws last.
+     */
     fun frame(): Frame {
-        val slots = HashMap<Int, SlotView>()
-        val layers = mutableListOf<TitleLayer>()
-        val playerSlots = HashMap<Int, SlotView>()
+        val outputs = outputs()
+        val (top, rest) = outputs.flatMap { it.layers }.partition { it.onTop }
+        return Frame(
+            slots = outputs.flatMap { it.slots.toList() }.toMap(),
+            layers = rest + top,
+            playerSlots = outputs.flatMap { it.playerSlots.toList() }.toMap(),
+        )
+    }
 
-        fun collect(region: Region) {
-            for (entry in region.entries) {
-                when (entry) {
-                    is ElementEntry -> {
-                        slots += entry.slots
-                        layers += entry.layers
-                        playerSlots += entry.playerSlots
-                    }
-
-                    is BlockEntry -> {
-                        entry.regions.forEach(::collect)
-                    }
-                }
-            }
+    private fun outputs(): List<RenderScope> = entries.flatMap { entry ->
+        when (entry) {
+            is ElementEntry -> listOfNotNull(entry.output)
+            is BlockEntry -> entry.regions.flatMap(Region::outputs)
         }
-
-        collect(this)
-        val (top, rest) = layers.partition { it is TitleLayer.TextLayer && it.onTop }
-        return Frame(slots, rest + top, playerSlots)
     }
 }

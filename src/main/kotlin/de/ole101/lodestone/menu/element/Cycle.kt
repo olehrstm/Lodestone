@@ -1,8 +1,7 @@
 package de.ole101.lodestone.menu.element
 
 import de.ole101.lodestone.menu.MenuScope
-import de.ole101.lodestone.menu.layout.slotIndex
-import de.ole101.lodestone.reactive.State
+import de.ole101.lodestone.reactive.node.State
 import net.minestom.server.inventory.click.Click
 import net.minestom.server.item.ItemStack
 
@@ -10,7 +9,8 @@ import net.minestom.server.item.ItemStack
  * Adds a slot that switches between [options] when clicked. A left click selects the next option and a right click the
  * previous one, wrapping around at the ends. Shift clicks count the same. [display] returns the item shown for the
  * selected option and is called again when a state it read changes. Returns the [Cycler] that holds the selection.
- * Throws [IllegalArgumentException] if [options] is empty, [initial] is not one of them, or [slot] is outside the menu.
+ *
+ * @throws IllegalArgumentException if [options] is empty, [initial] is not one of them, or [slot] is outside the menu.
  */
 public fun <T> MenuScope.cycle(
     slot: Int,
@@ -26,11 +26,11 @@ public fun <T> MenuScope.cycle(
         item { display(cycler.selected) }
         onClick { click ->
             when (click.click) {
-                is Click.LeftShift -> {
+                is Click.Left, is Click.LeftShift -> {
                     cycler.next()
                 }
 
-                is Click.RightShift -> {
+                is Click.Right, is Click.RightShift -> {
                     cycler.previous()
                 }
 
@@ -49,12 +49,18 @@ public fun <T> MenuScope.cycle(
     display: (T) -> ItemStack,
 ): Cycler<T> = cycle(session.type.slotIndex(column, row), options, initial, display)
 
-/** The selection of a [cycle] slot. Reading [selected] in an effect or element tracks it. */
+/**
+ * The selection of a [cycle] slot. Reading [selected] in an effect or element tracks it.
+ */
 public class Cycler<T> internal constructor(
     public val options: List<T>,
     private val index: State<Int>,
 ) {
-    /** The selected option. Throws [IllegalArgumentException] when set to a value that is not one of [options]. */
+    /**
+     * The selected option.
+     *
+     * @throws IllegalArgumentException when set to a value that is not one of [options].
+     */
     public var selected: T
         get() = options[index.value]
         set(value) {
@@ -63,13 +69,17 @@ public class Cycler<T> internal constructor(
             index.value = newIndex
         }
 
-    /** Selects the next option, or the first after the last. */
-    public fun next() {
-        index.value = (index.value + 1) % options.size
-    }
+    /**
+     * Selects the next option, or the first after the last.
+     */
+    public fun next(): Unit = step(1)
 
-    /** Selects the previous option, or the last before the first. */
-    public fun previous() {
-        index.value = (index.value - 1).mod(options.size)
+    /**
+     * Selects the previous option, or the last before the first.
+     */
+    public fun previous(): Unit = step(-1)
+
+    private fun step(delta: Int) {
+        index.value = (index.value + delta).mod(options.size)
     }
 }

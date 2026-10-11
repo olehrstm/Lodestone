@@ -42,17 +42,16 @@ class InputTest :
         }
 
         // Slots 0 and 1 take diamonds, slot 2 is a locked diamond
-        fun inputMenu(changes: MutableList<ItemStack> = mutableListOf()) =
-            menu(rows = 1) {
-                for (index in 0..1) {
-                    slot(index) {
-                        policy = SlotPolicy.PLACE
-                        accepts { it.material() == Material.DIAMOND }
-                        onChange { _, new -> changes += new }
-                    }
+        fun inputMenu(changes: MutableList<ItemStack> = mutableListOf()) = menu(rows = 1) {
+            for (index in 0..1) {
+                slot(index) {
+                    policy = SlotPolicy.PLACE
+                    accepts { it.material() == Material.DIAMOND }
+                    onChange { _, new -> changes += new }
                 }
-                slot(2) { item { stack(Material.DIAMOND) } }
             }
+            slot(2) { item { stack(Material.DIAMOND) } }
+        }
 
         test("the session reads and replaces slot contents, and reads are tracked") {
             val changes = mutableListOf<ItemStack>()

@@ -3,24 +3,33 @@ package de.ole101.lodestone.menu.slot
 import net.minestom.server.inventory.click.Click
 import net.minestom.server.item.ItemStack
 
-/** What players may do with the item in a menu slot. */
-public enum class SlotPolicy {
-    /** Every click is cancelled. */
-    LOCKED,
+/**
+ * What players may do with the item in a menu slot.
+ */
+public enum class SlotPolicy(
+    internal val canTake: Boolean,
+    internal val canPlace: Boolean,
+) {
+    /**
+     * Every click is cancelled.
+     */
+    LOCKED(canTake = false, canPlace = false),
 
-    /** Players may take the item out, but not put items in. */
-    TAKE,
+    /**
+     * Players may take the item out, but not put items in.
+     */
+    TAKE(canTake = true, canPlace = false),
 
-    /** Players may put items in, for example an input slot, but not take them out. */
-    PLACE,
+    /**
+     * Players may put items in, for example an input slot, but not take them out.
+     */
+    PLACE(canTake = false, canPlace = true),
 
-    /** Players may take items out and put items in. */
-    FREE,
+    /**
+     * Players may take items out and put items in.
+     */
+    FREE(canTake = true, canPlace = true),
 }
-
-internal val SlotPolicy.canTake: Boolean get() = this == SlotPolicy.TAKE || this == SlotPolicy.FREE
-
-internal val SlotPolicy.canPlace: Boolean get() = this == SlotPolicy.PLACE || this == SlotPolicy.FREE
 
 /**
  * Returns whether [click] on a slot holding [slotItem] follows this policy. [cursor] is the item on the cursor,
@@ -32,29 +41,46 @@ internal fun SlotPolicy.allows(
     cursor: ItemStack,
     swapped: ItemStack,
     accepts: (ItemStack) -> Boolean,
-): Boolean {
-    fun placeable(item: ItemStack) = canPlace && accepts(item)
+): Boolean = when (click) {
+    is Click.Left, is Click.Right -> allowsPrimaryClick(slotItem, cursor, accepts)
 
-    return when (click) {
-        is Click.Right -> {
-            when {
-                cursor.isAir -> canTake && !slotItem.isAir
-                slotItem.isAir || cursor.isSimilar(slotItem) -> placeable(cursor)
-                else -> canTake && placeable(cursor)
-            }
-        }
+    is Click.LeftShift, is Click.RightShift, is Click.DropSlot -> canTake
 
-        is Click.DropSlot -> {
-            canTake
-        }
+    is Click.HotbarSwap, is Click.OffhandSwap -> allowsSwap(slotItem, swapped, accepts)
 
-        is Click.OffhandSwap -> {
-            (slotItem.isAir || canTake) && (swapped.isAir || placeable(swapped))
-        }
-
-        // Double clicks and drags involve several slots and are checked by the session; middle clicks are creative only
-        else -> {
-            false
-        }
-    }
+    // Double clicks and drags involve several slots and are checked by the session, while middle clicks are creative only.
+    is Click.Double, is Click.Drag, is Click.Middle, is Click.DropCursor -> false
 }
+
+/**
+ * Returns whether [item] may be put into a slot holding [slotItem]. Only an empty slot or a matching stack accepts it.
+ */
+internal fun SlotPolicy.allowsPlacing(
+    slotItem: ItemStack,
+    item: ItemStack,
+    accepts: (ItemStack) -> Boolean,
+): Boolean = canPlace && accepts(item) && (slotItem.isAir || slotItem.isSimilar(item))
+
+/**
+ * Returns whether a double click holding [cursor] may collect from a slot holding [slotItem].
+ */
+internal fun SlotPolicy?.allowsCollecting(
+    slotItem: ItemStack,
+    cursor: ItemStack,
+): Boolean = this?.canTake == true || !slotItem.isSimilar(cursor)
+
+private fun SlotPolicy.allowsPrimaryClick(
+    slotItem: ItemStack,
+    cursor: ItemStack,
+    accepts: (ItemStack) -> Boolean,
+): Boolean = when {
+    cursor.isAir -> canTake && !slotItem.isAir
+    slotItem.isAir || cursor.isSimilar(slotItem) -> canPlace && accepts(cursor)
+    else -> canTake && canPlace && accepts(cursor)
+}
+
+private fun SlotPolicy.allowsSwap(
+    slotItem: ItemStack,
+    swapped: ItemStack,
+    accepts: (ItemStack) -> Boolean,
+): Boolean = (slotItem.isAir || canTake) && (swapped.isAir || (canPlace && accepts(swapped)))

@@ -3,26 +3,24 @@ package de.ole101.lodestone.menu
 import de.ole101.lodestone.coroutine.tickScope
 import de.ole101.lodestone.event.eventNode
 import de.ole101.lodestone.event.listen
-import de.ole101.lodestone.exceptionManager
 import de.ole101.lodestone.globalEventHandler
 import de.ole101.lodestone.menu.layout.MenuType
-import de.ole101.lodestone.menu.layout.checkSlot
-import de.ole101.lodestone.menu.layout.inventoryType
-import de.ole101.lodestone.menu.layout.slotIndex
 import de.ole101.lodestone.menu.render.Frame
 import de.ole101.lodestone.menu.render.Region
-import de.ole101.lodestone.menu.slot.ClickContext
-import de.ole101.lodestone.menu.slot.SlotView
-import de.ole101.lodestone.menu.slot.allows
-import de.ole101.lodestone.menu.slot.canPlace
-import de.ole101.lodestone.menu.slot.canTake
+import de.ole101.lodestone.menu.session.AnvilField
+import de.ole101.lodestone.menu.session.ClickHandler
+import de.ole101.lodestone.menu.session.InputSlots
+import de.ole101.lodestone.menu.session.MenuHooks
+import de.ole101.lodestone.menu.session.Navigation
+import de.ole101.lodestone.menu.session.PlayerSlotOverlay
+import de.ole101.lodestone.menu.slot.isInput
 import de.ole101.lodestone.reactive.ReactiveScope
-import de.ole101.lodestone.reactive.state
-import de.ole101.lodestone.reactive.untrack
+import de.ole101.lodestone.reactive.node.safely
+import de.ole101.lodestone.reactive.node.state
+import de.ole101.lodestone.reactive.node.untracked
 import de.ole101.lodestone.schedulerManager
 import kotlinx.coroutines.cancel
 import net.kyori.adventure.text.Component
-import net.minestom.server.entity.EquipmentSlot
 import net.minestom.server.entity.Player
 import net.minestom.server.event.inventory.InventoryCloseEvent
 import net.minestom.server.event.inventory.InventoryItemChangeEvent
@@ -31,16 +29,8 @@ import net.minestom.server.event.player.PlayerAnvilInputEvent
 import net.minestom.server.event.player.PlayerDisconnectEvent
 import net.minestom.server.inventory.Inventory
 import net.minestom.server.inventory.PlayerInventory
-import net.minestom.server.inventory.click.Click
 import net.minestom.server.item.ItemStack
-import net.minestom.server.network.packet.server.play.WindowItemsPacket
-import net.minestom.server.tag.Tag
 import net.minestom.server.timer.TaskSchedule
-import net.minestom.server.utils.inventory.PlayerInventoryUtils
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
-import kotlin.time.Duration
 
 /**
  * A live menu. It is one inventory with its state that all its viewers share. Create it with [MenuBlueprint.create].
@@ -52,14 +42,8 @@ public class MenuSession internal constructor(
     private val disposePolicy: DisposePolicy,
     setup: MenuScope.() -> Unit,
 ) {
-    internal val inventory: Inventory = Inventory(type.inventoryType, Component.empty())
-    internal val openHooks = CopyOnWriteArrayList<(Player) -> Unit>()
-    internal val closeHooks = CopyOnWriteArrayList<(Player, CloseReason) -> Unit>()
-    internal val clickHooks = CopyOnWriteArrayList<(ClickContext) -> Unit>()
-    internal val playerInventoryClickHooks = CopyOnWriteArrayList<(ClickContext) -> Unit>()
-    internal val outsideClickHooks = CopyOnWriteArrayList<(ClickContext) -> Unit>()
-    internal val tickHooks = CopyOnWriteArrayList<() -> Unit>()
-    internal var clickCooldown: Duration = Duration.ZERO
+    internal val inventory = Inventory(type.inventoryType, Component.empty())
+    internal val hooks = MenuHooks()
 
     private val contentsVersion = state(0)
     private val coroutineScope = tickScope()
@@ -67,87 +51,58 @@ public class MenuSession internal constructor(
     private val root = Region()
     private val node = eventNode("lodestone:menu")
     private val task = schedulerManager.buildTask(::tick).repeat(TaskSchedule.nextTick()).schedule()
-    private var frame = Frame.EMPTY
     private var dirty = false
     private var applying = false
 
-    // Who last put items into each input slot, to give them back. A stack filled by several players goes to the last
-    // one. Viewers may click on different tick threads.
-    private val owners = ConcurrentHashMap<Int, Player>()
+    internal var frame = Frame.EMPTY
+        private set
 
-    // The session each player goes back to from here, and the players who may come back here from a later menu
-    private val backs = ConcurrentHashMap<Player, MenuSession>()
-    private val away: MutableSet<Player> = ConcurrentHashMap.newKeySet()
+    internal val anvil = AnvilField(this)
+    internal val clicks = ClickHandler(this)
+    internal val inputSlots = InputSlots(this)
+    internal val playerOverlay = PlayerSlotOverlay(this)
+    internal val navigation = Navigation(this)
 
-    // Players answering a prompt, with a token per prompt so an older prompt cannot end a newer one
-    private val prompts = ConcurrentHashMap<Player, Any>()
-
-    private val lastClicks = ConcurrentHashMap<UUID, Long>()
-
-    /** Whether [dispose] ran. A disposed session cannot be opened. */
+    /**
+     * Whether [dispose] ran. A disposed session cannot be opened.
+     */
     public var isDisposed: Boolean = false
         private set
 
-    /** The players viewing this session. Reading it in an effect or element tracks it. */
+    /**
+     * The players viewing this session. Reading it in an effect or element tracks it.
+     */
     public var viewers: Set<Player> by state(emptySet())
         private set
 
-    private val currentViewers: Set<Player> get() = untrack { viewers }
+    internal val currentViewers: Set<Player>
+        get() = untracked { viewers }
 
     /**
      * The current anvil rename text, initially empty. Reading it in an element tracks changes.
      * Typed text keeps only printable ASCII characters and is trimmed. It is empty for chest menus.
      * Anvil text is shared by the viewers of this session.
      */
-    public var anvilInput: String by state("")
-        private set
-
-    private var hasAnvilInput: Boolean = false
-
-    // The text as the client shows it, so seeding slot 0 does not change what the player typed
-    private var typedAnvilText = ""
-
-    internal fun initializeAnvilInput(initial: String) {
-        check(type == MenuType.ANVIL) { "Anvil input requires ANVIL, but was $type" }
-        check(!hasAnvilInput) { "Anvil input is already configured" }
-        hasAnvilInput = true
-        typedAnvilText = initial
-        anvilInput = sanitizeAnvilText(initial)
-    }
-
-    private fun sanitizeAnvilText(text: String): String = text.filter { it in ' '..'~' }.trim()
+    public val anvilInput: String
+        get() = anvil.text
 
     init {
-        listen<InventoryPreClickEvent>(node, ::handleClick)
+        listen<InventoryPreClickEvent>(node, clicks::handle)
         listen<InventoryCloseEvent>(node) { event ->
             if (event.inventory !== inventory) return@listen
-            val reason =
-                when {
-                    event.player in away -> CloseReason.NAVIGATED
-                    event.isFromClient -> CloseReason.PLAYER
-                    else -> CloseReason.SERVER
-                }
-            removeViewer(event.player, reason)
+            removeViewer(event.player, closeReason(event))
         }
         listen<InventoryItemChangeEvent>(node, ::handleChange)
-        listen<PlayerDisconnectEvent>(node) { event -> returnItemsOf(event.player) }
-        listen<PlayerAnvilInputEvent>(node) { event ->
-            if (type == MenuType.ANVIL && event.inventory === inventory && event.player in currentViewers) {
-                typedAnvilText = event.input
-                val text = sanitizeAnvilText(event.input)
-                if (text != anvilInput) anvilInput = text
-                // The client predicts a rename result while typing, so the menu's result item is sent again
-                inventory.sendSlotRefresh(2, inventory.getItemStack(2))
-            }
-        }
+        listen<PlayerDisconnectEvent>(node) { event -> inputSlots.returnItemsOf(event.player) }
+        listen<PlayerAnvilInputEvent>(node, anvil::handleInput)
         reactive.afterFlush(::commit)
 
         try {
             MenuScope(this, reactive, root, coroutineScope).setup()
             reactive.flush()
-        } catch (e: Throwable) {
+        } catch (exception: Throwable) {
             dispose()
-            throw e
+            throw exception
         }
     }
 
@@ -158,15 +113,15 @@ public class MenuSession internal constructor(
      * @throws IllegalStateException if this session is disposed.
      */
     public fun open(player: Player) {
-        check(!isDisposed) { "$this is disposed" }
+        checkNotDisposed()
         openViewer(player)
     }
 
     /**
-     * Opens this session for [player] with [back] as the way back, for example from a click in [back].
-     * [back] stays alive while the player can return to it, even with [DisposePolicy.WHEN_EMPTY], and keeps its
-     * state. [goBack] returns there. When the player leaves this session any other way, the whole way back is released
-     * and disposed like a closed session. Does nothing if an event cancels the opening.
+     * Opens this session for [player] with [back] as the way back, for example from a click in [back]. [back] keeps its
+     * state and stays alive while the player can return to it, even with [DisposePolicy.WHEN_EMPTY]. [goBack] returns
+     * there. When the player leaves this session any other way, [back] is released like a closed session. Does nothing
+     * if an event cancels the opening.
      *
      * @throws IllegalStateException if this session or [back] is disposed.
      * @throws IllegalArgumentException if [back] is this session.
@@ -175,117 +130,41 @@ public class MenuSession internal constructor(
         player: Player,
         back: MenuSession,
     ) {
-        check(!isDisposed) { "$this is disposed" }
+        checkNotDisposed()
         check(!back.isDisposed) { "$back is disposed" }
         require(back !== this) { "A session cannot be its own way back" }
 
-        // The player may already be away from back, for example when this session is opened twice
-        val wasAway = !back.away.add(player)
-        if (!openViewer(player)) {
-            if (!wasAway) {
-                back.away -= player
-                back.disposeIfUnused()
-            }
-            return
-        }
-        backs.put(player, back)?.takeIf { it !== back }?.release(player)
-        back.removeViewer(player, CloseReason.NAVIGATED)
+        navigation.open(player, back)
     }
 
     /**
-     * Returns [player] to the session they came from with the `open` overload with a way back, which shows its state
-     * as they left it. Returns false and does nothing if there is no way back or it was disposed in the meantime.
+     * Returns [player] to the session they came from, showing its state as they left it.
+     * Returns false and does nothing if there is no way back or it was disposed in the meantime.
      */
-    public fun goBack(player: Player): Boolean {
-        val back = backs[player] ?: return false
-        if (back.isDisposed) {
-            backs -= player
-            return false
-        }
+    public fun goBack(player: Player): Boolean = navigation.goBack(player)
 
-        back.away -= player
-        if (!back.openViewer(player)) {
-            back.away += player
-            return false
-        }
-        backs -= player
-        // Going back leaves this session for good, so the player's items come back
-        returnItemsOf(player)
-        removeViewer(player, CloseReason.NAVIGATED)
-        return true
-    }
+    public fun canGoBack(player: Player): Boolean = navigation.canGoBack(player)
 
-    public fun canGoBack(player: Player): Boolean = backs[player]?.isDisposed == false
-
-    private fun openViewer(player: Player): Boolean {
+    internal fun openViewer(player: Player): Boolean {
         if (player in currentViewers) return false
-        seedAnvilInput()
+        anvil.seedIfConfigured()
         if (!player.openInventory(inventory)) return false
 
         viewers = currentViewers + player
-        if (frame.playerSlots.isNotEmpty()) showPlayerSlots(player)
-        openHooks.forEach { hook -> safely { hook(player) } }
+        if (frame.playerSlots.isNotEmpty()) playerOverlay.show(player)
+        hooks.open.forEach { hook -> safely { hook(player) } }
         return true
     }
 
-    private fun seedAnvilInput() {
-        if (hasAnvilInput) {
-            withoutChangeEvents {
-                inventory.setItemStack(0, inventory.getItemStack(0).withCustomName(Component.text(typedAnvilText)))
-            }
-        }
-    }
-
-    // The player will not come back here, so neither to the sessions before this one
-    private fun release(player: Player) {
-        away -= player
-        backs.remove(player)?.release(player)
-        disposeIfUnused()
-    }
-
-    /**
-     * Keeps this session for [player] while they answer a prompt outside it, and closes it for them if they view it.
-     * Returns the token that [endPrompt] needs.
-     */
-    internal fun beginPrompt(player: Player): Any {
-        check(!isDisposed) { "$this is disposed" }
-        val token = Any()
-        prompts[player] = token
-        away += player
-        if (player.openInventory === inventory) player.closeInventory()
-        return token
-    }
-
-    /** Ends the prompt with [token] without opening this session again, because the player left it for good. */
-    internal fun abandonPrompt(
-        player: Player,
-        token: Any,
-    ) {
-        if (prompts.remove(player, token)) release(player)
-    }
-
-    /**
-     * Ends the prompt with [token] and opens this session for [player] again, unless a newer prompt started, the
-     * player went offline, or something else opened an inventory for them in the meantime.
-     */
-    internal fun endPrompt(
-        player: Player,
-        token: Any,
-    ) {
-        if (!prompts.remove(player, token)) return
-        away -= player
-        if (!isDisposed && player.isOnline && player.openInventory == null) openViewer(player)
-        disposeIfUnused()
-    }
-
-    private fun disposeIfUnused() {
-        if (disposePolicy == DisposePolicy.WHEN_EMPTY && currentViewers.isEmpty() && away.isEmpty()) dispose()
+    internal fun disposeIfUnused() {
+        if (disposePolicy == DisposePolicy.WHEN_EMPTY && currentViewers.isEmpty() && navigation.hasNoAway) dispose()
     }
 
     /**
      * Returns the item in [slot], also one a player put there. Reading it in an effect or element tracks changes by
      * players and by [set]. Items the menu renders change together with the states they come from.
-     * Throws [IllegalArgumentException] if [slot] is outside the menu.
+     *
+     * @throws IllegalArgumentException if [slot] is outside the menu.
      */
     public operator fun get(slot: Int): ItemStack {
         type.checkSlot(slot)
@@ -301,7 +180,8 @@ public class MenuSession internal constructor(
     /**
      * Puts [item] into [slot], for example to take the items a player placed into an input slot. It counts as a
      * change for `onChange` handlers. The next render only replaces it when the slot's `item { }` result changes.
-     * Throws [IllegalArgumentException] if [slot] is outside the menu.
+     *
+     * @throws IllegalArgumentException if [slot] is outside the menu.
      */
     public operator fun set(
         slot: Int,
@@ -309,7 +189,7 @@ public class MenuSession internal constructor(
     ) {
         type.checkSlot(slot)
         // The menu owns what it puts there, so it is never given to a player
-        owners -= slot
+        inputSlots.forget(slot)
         inventory.setItemStack(slot, item)
     }
 
@@ -326,7 +206,9 @@ public class MenuSession internal constructor(
      * back to it.
      */
     public fun close() {
-        currentViewers.forEach { if (it.openInventory === inventory) it.closeInventory() }
+        currentViewers
+            .filter { it.openInventory === inventory }
+            .forEach(Player::closeInventory)
     }
 
     /**
@@ -339,8 +221,8 @@ public class MenuSession internal constructor(
         isDisposed = true
 
         close()
-        for (slot in owners.keys.toList()) returnItem(slot)
-        for (player in backs.keys.toList()) backs.remove(player)?.release(player)
+        inputSlots.returnAll()
+        navigation.releaseAllBacks()
         task.cancel()
         coroutineScope.cancel()
         reactive.dispose()
@@ -351,240 +233,29 @@ public class MenuSession internal constructor(
         dirty = true
     }
 
-    private fun commit() {
-        if (!dirty || isDisposed) return
-        dirty = false
-
-        val previous = frame
-        frame = root.frame()
-        withoutChangeEvents {
-            // Items in a slot that stopped being an input slot go back to whoever put them there
-            for (slot in 0 until inventory.size) {
-                if (previous.slots[slot].isInput() && !frame.slots[slot].isInput()) returnItem(slot)
-                val item = frame.slots[slot]?.item ?: ItemStack.AIR
-                if (item != (previous.slots[slot]?.item ?: ItemStack.AIR)) inventory.setItemStack(slot, item)
-            }
-        }
-        if (frame.playerSlots.mapValues { it.value.item } != previous.playerSlots.mapValues { it.value.item }) {
-            currentViewers.forEach(::showPlayerSlots)
-        }
-        // The client resets the anvil text to the name of slot 0 when it changes or the window reopens
-        if (frame.slots[0]?.item != previous.slots[0]?.item) seedAnvilInput()
-        if (frame.layers != previous.layers) {
-            safely {
-                seedAnvilInput()
-                inventory.title = frame.title(type)
-            }
-        }
+    internal fun markContentsChanged() {
+        contentsVersion.value++
     }
 
-    private fun tick() {
-        for (viewer in currentViewers) {
-            if (viewer.openInventory !== inventory) {
-                removeViewer(viewer, if (viewer.isOnline) CloseReason.REPLACED else CloseReason.DISCONNECTED)
-            }
-        }
-        // A player who leaves the server never answers their prompt
-        for ((player, token) in prompts) {
-            if (!player.isOnline) endPrompt(player, token)
-        }
-        tickHooks.forEach { safely(it) }
-    }
-
-    private fun removeViewer(
+    internal fun removeViewer(
         player: Player,
         reason: CloseReason,
     ) {
         if (player !in currentViewers) return
 
         viewers = currentViewers - player
-        lastClicks -= player.uuid
-        restorePlayerSlots(player)
+        clicks.cooldown.forget(player)
+        playerOverlay.restore(player)
         if (reason != CloseReason.NAVIGATED) {
-            returnItemsOf(player)
-            backs.remove(player)?.release(player)
+            inputSlots.returnItemsOf(player)
+            navigation.releaseBack(player)
         }
-        closeHooks.forEach { hook -> safely { hook(player, reason) } }
+        hooks.close.forEach { hook -> safely { hook(player, reason) } }
         disposeIfUnused()
     }
 
-    private fun handleClick(event: InventoryPreClickEvent) {
-        val player = event.player
-        // Minestom sends the real items again after a click, so the player slots are shown again
-        if (player.getTag(PLAYER_SLOTS_OWNER) === this) showPlayerSlotsAtTickEnd(player)
-        val click = event.click
-        val cursor = player.inventory.cursorItem
-
-        if (event.inventory !== inventory) {
-            if (player.openInventory === inventory) handlePlayerInventoryClick(event)
-            return
-        }
-
-        if (isCoolingDown(player)) {
-            event.isCancelled = true
-            return
-        }
-
-        when (click) {
-            is Click.Drag -> {
-                val menuSlots = click.slots().filter { it < inventory.size }
-                event.isCancelled = click is Click.MiddleDrag || !menuSlots.all { canPlace(it, cursor) }
-                if (!event.isCancelled) menuSlots.forEach { owners[it] = player }
-                return
-            }
-
-            is Click.Double -> {
-                event.isCancelled = !canCollect(cursor)
-                return
-            }
-
-            else -> {}
-        }
-
-        val slot = click.slot()
-        if (slot !in 0 until inventory.size) {
-            event.isCancelled = true
-            return
-        }
-
-        val view = frame.slots[slot]
-        val swapped =
-            when (click) {
-                is Click.HotbarSwap -> player.inventory.getItemStack(click.hotbarSlot())
-                is Click.OffhandSwap -> player.getEquipment(EquipmentSlot.OFF_HAND)
-                else -> ItemStack.AIR
-            }
-        val allowed = view != null && view.policy.allows(click, inventory.getItemStack(slot), cursor, swapped, view.accepts)
-        val context = ClickContext(player, slot, click, isCancelled = !allowed)
-        clickHooks.forEach { it(context) }
-        view?.onClick?.invoke(context)
-        event.isCancelled = context.isCancelled
-        if (!context.isCancelled && view.isInput()) owners[slot] = player
-    }
-
-    private fun handlePlayerInventoryClick(event: InventoryPreClickEvent) {
-        val player = event.player
-        val click = event.click
-
-        // The client reports clicks outside the GUI as dropping the cursor, also when the cursor is empty
-        if (click is Click.DropCursor) {
-            val context = ClickContext(player, click.slot(), click, isCancelled = false)
-            outsideClickHooks.forEach { it(context) }
-            event.isCancelled = context.isCancelled
-            return
-        }
-        val covered = frame.playerSlots
-        if (covered.isNotEmpty()) {
-            // Drags and double clicks may touch slots the menu shows instead of the player's items
-            if (click is Click.Drag || click is Click.Double) {
-                event.isCancelled = true
-                return
-            }
-            val index = playerSlotIndex(click.slot())
-            val view = index?.let(covered::get)
-            if (view != null) {
-                view.onClick?.invoke(ClickContext(player, index, click, isCancelled = true))
-                event.isCancelled = true
-                return
-            }
-        }
-        // Double clicks also collect from the menu, so they must not take items the menu owns
-        val context =
-            ClickContext(player, click.slot(), click, isCancelled = click is Click.Double && !canCollect(player.inventory.cursorItem))
-        playerInventoryClickHooks.forEach { it(context) }
-
-        if (!context.isCancelled && (click is Click.LeftShift || click is Click.RightShift)) {
-            // Minestom would fill any menu slot, so only input slots are filled here
-            moveIntoInputSlots(player, click.slot())
-            event.isCancelled = true
-            return
-        }
-        event.isCancelled = context.isCancelled
-    }
-
-    private fun canPlace(
-        slot: Int,
-        item: ItemStack,
-    ): Boolean {
-        val view = frame.slots[slot] ?: return false
-        val current = inventory.getItemStack(slot)
-        return view.policy.canPlace && view.accepts(item) &&
-            (current.isAir || current.isSimilar(item))
-    }
-
-    private fun canCollect(cursor: ItemStack): Boolean =
-        (0 until inventory.size).none { slot ->
-            frame.slots[slot]?.policy?.canTake != true && inventory.getItemStack(slot).isSimilar(cursor)
-        }
-
-    // Stacks onto matching input slots first, then fills empty ones, like a shift click into a chest
-    private fun moveIntoInputSlots(
-        player: Player,
-        playerSlot: Int,
-    ) {
-        var remaining = player.inventory.getItemStack(playerSlot)
-        if (remaining.isAir) return
-
-        val targets = (0 until inventory.size).filter { canPlace(it, remaining) }
-        for (fillEmpty in listOf(false, true)) {
-            for (slot in targets) {
-                if (remaining.isAir) break
-                val current = inventory.getItemStack(slot)
-                if (current.isAir != fillEmpty) continue
-
-                val stacked = if (fillEmpty) 0 else current.amount()
-                val moved = minOf(remaining.amount(), remaining.maxStackSize() - stacked)
-                if (moved <= 0) continue
-                inventory.setItemStack(slot, remaining.withAmount(stacked + moved))
-                owners[slot] = player
-                remaining = if (remaining.amount() == moved) ItemStack.AIR else remaining.withAmount(remaining.amount() - moved)
-            }
-        }
-        player.inventory.setItemStack(playerSlot, remaining)
-    }
-
-    // Records the click unless it came too soon after the last recorded one
-    private fun isCoolingDown(player: Player): Boolean {
-        if (!clickCooldown.isPositive()) return false
-
-        val now = System.nanoTime()
-        val last = lastClicks[player.uuid]
-        if (last != null && now - last < clickCooldown.inWholeNanoseconds) return true
-        lastClicks[player.uuid] = now
-        return false
-    }
-
-    private fun handleChange(event: InventoryItemChangeEvent) {
-        if (event.inventory is PlayerInventory) {
-            val owner = currentViewers.firstOrNull { it.inventory === event.inventory } ?: return
-            if (owner.getTag(PLAYER_SLOTS_OWNER) === this) showPlayerSlotsAtTickEnd(owner)
-            return
-        }
-        if (event.inventory !== inventory || applying) return
-        if (event.newItem.isAir) owners -= event.slot
-        contentsVersion.value++
-        frame.slots[event.slot]?.onChange?.invoke(event.previousItem, event.newItem)
-    }
-
-    private fun returnItemsOf(player: Player) {
-        owners.filterValues { it == player }.keys.forEach(::returnItem)
-    }
-
-    // Gives the item in slot to the player who put it there. A player who left still gets it into their inventory,
-    // and only an online player can drop what does not fit.
-    private fun returnItem(slot: Int) {
-        val owner = owners[slot] ?: return
-        owners -= slot
-
-        val item = inventory.getItemStack(slot)
-        if (item.isAir) return
-        withoutChangeEvents { inventory.setItemStack(slot, ItemStack.AIR) }
-        contentsVersion.value++
-        if (!owner.inventory.addItemStack(item) && owner.isOnline) owner.dropItem(item)
-    }
-
     // Changes made by the menu itself are not reported to onChange handlers
-    private inline fun withoutChangeEvents(block: () -> Unit) {
+    internal inline fun withoutChangeEvents(block: () -> Unit) {
         val wasApplying = applying
         applying = true
         try {
@@ -594,63 +265,65 @@ public class MenuSession internal constructor(
         }
     }
 
-    /** Returns the window items that show [player] their inventory with this menu's player slots on top. */
-    internal fun playerWindowItems(player: Player): List<ItemStack> {
-        val items = MutableList(PlayerInventory.INVENTORY_SIZE) { ItemStack.AIR }
-        for (slot in 0 until PlayerInventory.INVENTORY_SIZE) {
-            items[PlayerInventoryUtils.convertMinestomSlotToWindowSlot(slot)] = player.inventory.getItemStack(slot)
-        }
-        for ((index, view) in frame.playerSlots) {
-            items[PlayerInventoryUtils.convertMinestomSlotToWindowSlot(playerInventorySlot(index))] = view.item
-        }
-        return items
+    internal fun checkNotDisposed() = check(!isDisposed) { "$this is disposed" }
+
+    private fun closeReason(event: InventoryCloseEvent): CloseReason = when {
+        navigation.isAway(event.player) -> CloseReason.NAVIGATED
+        event.isFromClient -> CloseReason.PLAYER
+        else -> CloseReason.SERVER
     }
 
-    // The client shows the player inventory window behind every container, so this replaces what it shows
-    private fun showPlayerSlots(player: Player) {
-        if (frame.playerSlots.isEmpty()) {
-            restorePlayerSlots(player)
-            return
+    private fun tick() {
+        for (viewer in currentViewers) {
+            if (viewer.openInventory === inventory) continue
+            removeViewer(viewer, if (viewer.isOnline) CloseReason.REPLACED else CloseReason.DISCONNECTED)
         }
-        player.setTag(PLAYER_SLOTS_OWNER, this)
-        player.sendPacket(WindowItemsPacket(0, 0, playerWindowItems(player), player.inventory.cursorItem))
+        navigation.endOfflinePrompts()
+        hooks.tick.forEach { safely(it) }
     }
 
-    private fun showPlayerSlotsAtTickEnd(player: Player) {
-        player.scheduler().scheduleEndOfTick {
-            if (player.getTag(PLAYER_SLOTS_OWNER) === this && player in currentViewers) showPlayerSlots(player)
+    private fun commit() {
+        if (!dirty || isDisposed) return
+        dirty = false
+
+        val previous = frame
+        frame = root.frame()
+        applySlots(previous)
+        if (frame.playerItems != previous.playerItems) currentViewers.forEach(playerOverlay::show)
+        if (frame.itemAt(0) != previous.itemAt(0)) anvil.seedIfConfigured()
+        if (frame.layers != previous.layers) applyTitle()
+    }
+
+    private fun applySlots(previous: Frame) = withoutChangeEvents {
+        for (slot in 0 until inventory.size) {
+            // Items in a slot that stopped being an input slot go back to whoever put them there
+            if (previous.slots[slot].isInput && !frame.slots[slot].isInput) inputSlots.returnItem(slot)
+
+            val item = frame.itemAt(slot)
+            if (item != previous.itemAt(slot)) inventory.setItemStack(slot, item)
         }
     }
 
-    // Only the session that showed its player slots restores them, so a menu opened over it keeps its own
-    private fun restorePlayerSlots(player: Player) {
-        if (player.getTag(PLAYER_SLOTS_OWNER) !== this) return
-        player.removeTag(PLAYER_SLOTS_OWNER)
-        if (player.isOnline) player.inventory.update()
+    private fun applyTitle() {
+        safely {
+            // Changing the title reopens the window
+            anvil.seedIfConfigured()
+            inventory.title = frame.title(type)
+        }
     }
 
-    private fun SlotView?.isInput(): Boolean = this?.policy?.canPlace == true
+    private fun handleChange(event: InventoryItemChangeEvent) {
+        when {
+            event.inventory is PlayerInventory -> playerOverlay.showAgainAfterChange(event.inventory)
+            event.inventory === inventory && !applying -> handleMenuChange(event)
+        }
+    }
+
+    private fun handleMenuChange(event: InventoryItemChangeEvent) {
+        if (event.newItem.isAir) inputSlots.forget(event.slot)
+        markContentsChanged()
+        frame.slots[event.slot]?.onChange?.invoke(event.previousItem, event.newItem)
+    }
 
     override fun toString(): String = "MenuSession(type=$type, viewers=${currentViewers.size}, disposed=$isDisposed)"
 }
-
-internal inline fun safely(block: () -> Unit) {
-    try {
-        block()
-    } catch (e: Throwable) {
-        exceptionManager.handleException(e)
-    }
-}
-
-// The session whose player slots a player's client shows instead of their own items
-private val PLAYER_SLOTS_OWNER: Tag<MenuSession> = Tag.Transient("lodestone:menu-player-slots")
-
-// Player slots count row by row through the main inventory, with the hotbar as the last row
-private fun playerInventorySlot(index: Int): Int = if (index < 27) index + 9 else index - 27
-
-private fun playerSlotIndex(inventorySlot: Int): Int? =
-    when (inventorySlot) {
-        in 9..35 -> inventorySlot - 9
-        in 0..8 -> inventorySlot + 27
-        else -> null
-    }

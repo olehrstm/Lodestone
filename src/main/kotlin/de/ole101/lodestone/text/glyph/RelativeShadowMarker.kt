@@ -4,7 +4,7 @@ import net.kyori.adventure.text.format.ShadowColor
 import net.kyori.adventure.text.format.TextColor
 
 // Text in this color is hidden by the GUI text shader, which draws its shadow marker instead
-internal val SHADER_HIDDEN_COLOR: TextColor = TextColor.color(0x4EB000)
+internal val SHADER_HIDDEN_COLOR = TextColor.color(0x4EB000)
 
 private const val SENTINEL_ALPHA = 0x4E
 private const val FEATURE_OFFSET = 0xB0

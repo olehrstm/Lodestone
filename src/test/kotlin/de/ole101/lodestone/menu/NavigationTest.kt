@@ -38,7 +38,7 @@ class NavigationTest :
             set(7)
             schedulerManager.processTickEnd()
 
-            val child = menu(rows = 1) {}.open(player, back = parent)
+            val child = menu(rows = 1) {}.create().also { it.open(player, back = parent) }
             parent.isDisposed.shouldBeFalse()
             parent.viewers.isEmpty().shouldBeTrue()
             child.canGoBack(player).shouldBeTrue()
@@ -54,8 +54,8 @@ class NavigationTest :
         test("closing a child releases the whole way back") {
             val player = fakePlayer()
             val first = menu(rows = 1) {}.open(player)
-            val second = menu(rows = 1) {}.open(player, back = first)
-            val third = menu(rows = 1) {}.open(player, back = second)
+            val second = menu(rows = 1) {}.create().also { it.open(player, back = first) }
+            val third = menu(rows = 1) {}.create().also { it.open(player, back = second) }
 
             player.closeInventory()
 
@@ -88,8 +88,8 @@ class NavigationTest :
         test("opening a session that is already open keeps the whole way back") {
             val player = fakePlayer()
             val root = menu(rows = 1) {}.open(player)
-            val middle = menu(rows = 1) {}.open(player, back = root)
-            val top = menu(rows = 1) {}.open(player, back = middle)
+            val middle = menu(rows = 1) {}.create().also { it.open(player, back = root) }
+            val top = menu(rows = 1) {}.create().also { it.open(player, back = middle) }
 
             top.open(player, back = middle)
 

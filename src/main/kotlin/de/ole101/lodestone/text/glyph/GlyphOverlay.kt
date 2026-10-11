@@ -45,7 +45,8 @@ public class GlyphOverlayBuilder internal constructor(
 
     /**
      * Places [glyph] with its left edge at [x], shifted [y] pixels down.
-     * Throws [IllegalArgumentException] if the glyph has no [Glyph.width].
+     *
+     * @throws IllegalArgumentException if the glyph has no [Glyph.width].
      */
     public fun glyph(
         glyph: Glyph,
@@ -58,7 +59,8 @@ public class GlyphOverlayBuilder internal constructor(
     /**
      * Places [glyph] like the overload without a color, but tinted with [color]. [NamedTextColor.WHITE] shows the
      * texture as it is, for example in a menu title, which is dark gray by default.
-     * Throws [IllegalArgumentException] if the glyph has no [Glyph.width].
+     *
+     * @throws IllegalArgumentException if the glyph has no [Glyph.width].
      */
     public fun glyph(
         glyph: Glyph,

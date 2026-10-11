@@ -133,7 +133,5 @@ public class ReactiveScope internal constructor(
         owned += effect
     }
 
-    private fun checkNotDisposed() {
-        check(!disposed) { "This ReactiveScope is disposed" }
-    }
+    private fun checkNotDisposed() = check(!disposed) { "This ReactiveScope is disposed" }
 }
