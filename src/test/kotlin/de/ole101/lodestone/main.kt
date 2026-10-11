@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:filename")
+
 package de.ole101.lodestone
 
 import de.ole101.lodestone.event.listen
