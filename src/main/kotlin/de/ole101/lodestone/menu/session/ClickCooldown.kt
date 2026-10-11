@@ -11,18 +11,18 @@ internal class ClickCooldown {
     private val lastClicks = ConcurrentHashMap<UUID, Long>()
 
     /**
-     * Returns whether [player] clicked within [duration] of their last counted click. Otherwise it counts this click
-     * and returns false, so a cancelled click does not extend the cooldown.
+     * Counts this click of [player] and returns true, unless they clicked within [duration] of their last counted
+     * click. A rejected click is not counted, so it does not extend the cooldown.
      */
-    fun isCoolingDown(player: Player): Boolean {
-        if (!duration.isPositive()) return false
+    fun tryAcceptClick(player: Player): Boolean {
+        if (!duration.isPositive()) return true
 
         val now = System.nanoTime()
         val last = lastClicks[player.uuid]
-        if (last != null && now - last < duration.inWholeNanoseconds) return true
+        if (last != null && now - last < duration.inWholeNanoseconds) return false
 
         lastClicks[player.uuid] = now
-        return false
+        return true
     }
 
     fun forget(player: Player) {

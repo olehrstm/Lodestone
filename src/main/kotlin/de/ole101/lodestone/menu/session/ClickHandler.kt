@@ -35,23 +35,43 @@ internal class ClickHandler(
     }
 
     private fun handleMenuClick(event: InventoryPreClickEvent) {
-        val cursor = event.player.inventory.cursorItem
-        val slot = event.click.slot()
-        when {
-            cooldown.isCoolingDown(event.player) -> event.isCancelled = true
-            handleMultiSlotClick(event, cursor) -> Unit
-            slot !in 0 until inventory.size -> event.isCancelled = true
-            else -> handleSlotClick(event, slot, cursor)
+        if (!cooldown.tryAcceptClick(event.player)) {
+            event.isCancelled = true
+            return
         }
+
+        val cursor = event.player.inventory.cursorItem
+        // Drags and double clicks need policies for every slot they may touch
+        when (val click = event.click) {
+            is Click.Drag -> handleDrag(event, click, cursor)
+            is Click.Double -> event.isCancelled = !session.inputSlots.canCollect(cursor)
+            else -> handleSlotClick(event, cursor)
+        }
+    }
+
+    private fun handleDrag(
+        event: InventoryPreClickEvent,
+        click: Click.Drag,
+        cursor: ItemStack,
+    ) {
+        val menuSlots = click.slots().filter { it < inventory.size }
+        val allowed = click !is Click.MiddleDrag && menuSlots.all { session.inputSlots.canPlace(it, cursor) }
+        event.isCancelled = !allowed
+        if (allowed) menuSlots.forEach { session.inputSlots.claim(it, event.player) }
     }
 
     private fun handleSlotClick(
         event: InventoryPreClickEvent,
-        slot: Int,
         cursor: ItemStack,
     ) {
         val player = event.player
         val click = event.click
+        val slot = click.slot()
+        if (slot !in 0 until inventory.size) {
+            event.isCancelled = true
+            return
+        }
+
         val view = session.frame.slots[slot]
         val swapped = swappedItem(player, click)
         val allowed = view != null && view.policy.allows(click, inventory.getItemStack(slot), cursor, swapped, view.accepts)
@@ -61,29 +81,6 @@ internal class ClickHandler(
         view?.onClick?.invoke(context)
         event.isCancelled = context.isCancelled
         if (!context.isCancelled && view.isInput) session.inputSlots.claim(slot, player)
-    }
-
-    // Drags and double clicks need policies for every slot they may touch.
-    private fun handleMultiSlotClick(
-        event: InventoryPreClickEvent,
-        cursor: ItemStack,
-    ): Boolean = when (val click = event.click) {
-        is Click.Drag -> {
-            val menuSlots = click.slots().filter { it < inventory.size }
-            val allowed = click !is Click.MiddleDrag && menuSlots.all { session.inputSlots.canPlace(it, cursor) }
-            event.isCancelled = !allowed
-            if (allowed) menuSlots.forEach { session.inputSlots.claim(it, event.player) }
-            true
-        }
-
-        is Click.Double -> {
-            event.isCancelled = !session.inputSlots.canCollect(cursor)
-            true
-        }
-
-        else -> {
-            false
-        }
     }
 
     private fun handlePlayerInventoryClick(event: InventoryPreClickEvent) {
