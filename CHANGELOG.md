@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/olehrstm/Lodestone/compare/v2.0.0...v2.0.1) (2026-10-11)
+
+
+### Bug Fixes
+
+* **anvil:** correct wrong anvil repair cost ([#40](https://github.com/olehrstm/Lodestone/issues/40)) ([7e76224](https://github.com/olehrstm/Lodestone/commit/7e762245d66faead1642e0dd5e39640c266adc58))
+
 ## [2.0.0](https://github.com/olehrstm/Lodestone/compare/v1.1.0...v2.0.0) (2026-10-11)
 
 
