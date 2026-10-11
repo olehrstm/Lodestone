@@ -1,6 +1,6 @@
 package de.ole101.lodestone.menu.render
 
-import de.ole101.lodestone.menu.MenuDsl
+import de.ole101.lodestone.LodestoneDsl
 import de.ole101.lodestone.menu.MenuScope
 import de.ole101.lodestone.menu.MenuSession
 import de.ole101.lodestone.menu.layout.MenuMetrics
@@ -26,7 +26,7 @@ import net.kyori.adventure.text.format.TextColor
  *
  * @see MenuElement
  */
-@MenuDsl
+@LodestoneDsl
 public class RenderScope internal constructor(
     /**
      * The session this element renders in, for example to read [MenuSession.viewers] or slot contents.

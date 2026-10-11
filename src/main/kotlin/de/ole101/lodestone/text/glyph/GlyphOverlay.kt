@@ -1,5 +1,6 @@
 package de.ole101.lodestone.text.glyph
 
+import de.ole101.lodestone.LodestoneDsl
 import de.ole101.lodestone.text.pixelWidth
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TranslatableComponent
@@ -34,10 +35,7 @@ public fun glyphOverlay(
     block: GlyphOverlayBuilder.() -> Unit,
 ): Component = GlyphOverlayBuilder(inheritedColor).apply(block).build()
 
-@DslMarker
-public annotation class GlyphOverlayDsl
-
-@GlyphOverlayDsl
+@LodestoneDsl
 public class GlyphOverlayBuilder internal constructor(
     private val inheritedColor: TextColor,
 ) {

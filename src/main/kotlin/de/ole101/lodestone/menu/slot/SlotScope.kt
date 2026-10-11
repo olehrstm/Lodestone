@@ -1,6 +1,6 @@
 package de.ole101.lodestone.menu.slot
 
-import de.ole101.lodestone.menu.MenuDsl
+import de.ole101.lodestone.LodestoneDsl
 import de.ole101.lodestone.menu.MenuSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -14,7 +14,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  * Configures one menu slot. The block that configures it runs again each time the element around it re-renders,
  * so reads of states in it are tracked.
  */
-@MenuDsl
+@LodestoneDsl
 public class SlotScope internal constructor(
     /**
      * The session this slot belongs to. The DSL marker hides the menu scope inside slot blocks, so use it for slot

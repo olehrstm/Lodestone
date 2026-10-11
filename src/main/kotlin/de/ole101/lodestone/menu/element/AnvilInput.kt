@@ -1,8 +1,8 @@
 package de.ole101.lodestone.menu.element
 
+import de.ole101.lodestone.LodestoneDsl
 import de.ole101.lodestone.item.item
 import de.ole101.lodestone.menu.MenuBlueprint
-import de.ole101.lodestone.menu.MenuDsl
 import de.ole101.lodestone.menu.MenuScope
 import de.ole101.lodestone.menu.MenuSession
 import de.ole101.lodestone.menu.layout.MenuType
@@ -66,7 +66,7 @@ public fun MenuScope.anvilInput(
     }
 }
 
-@MenuDsl
+@LodestoneDsl
 public class AnvilInputScope internal constructor() {
     internal var confirm: ((Player, String) -> Unit)? = null
     internal var cancel: ((Player) -> Unit)? = null

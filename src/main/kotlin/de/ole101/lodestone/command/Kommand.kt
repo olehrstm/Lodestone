@@ -1,5 +1,6 @@
 package de.ole101.lodestone.command
 
+import de.ole101.lodestone.LodestoneDsl
 import de.ole101.lodestone.commandManager
 import net.minestom.server.command.CommandSender
 import net.minestom.server.command.builder.Command
@@ -7,9 +8,6 @@ import net.minestom.server.command.builder.CommandContext
 import net.minestom.server.command.builder.CommandExecutor
 import net.minestom.server.command.builder.arguments.Argument
 import net.minestom.server.command.builder.condition.CommandCondition
-
-@DslMarker
-public annotation class KommandDsl
 
 /**
  * Minestom [Command] with a Kotlin DSL for executors, conditions, syntaxes and subcommands.
@@ -28,12 +26,12 @@ public annotation class KommandDsl
  * }
  * ```
  */
-@KommandDsl
+@LodestoneDsl
 public abstract class Kommand(
     name: String,
     vararg aliases: String,
 ) : Command(name, *aliases) {
-    @KommandDsl
+    @LodestoneDsl
     public class CommandScope internal constructor(
         public val context: CommandContext,
     ) {

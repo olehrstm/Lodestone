@@ -1,6 +1,6 @@
 package de.ole101.lodestone.menu.element
 
-import de.ole101.lodestone.menu.MenuDsl
+import de.ole101.lodestone.LodestoneDsl
 import de.ole101.lodestone.menu.MenuScope
 import de.ole101.lodestone.menu.MenuSession
 import de.ole101.lodestone.menu.layout.MenuStyle
@@ -161,7 +161,7 @@ private fun MenuScope.button(
     }
 }
 
-@MenuDsl
+@LodestoneDsl
 public class ButtonScope internal constructor(
     public val session: MenuSession,
 ) {

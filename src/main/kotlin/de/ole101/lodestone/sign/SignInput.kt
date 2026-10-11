@@ -1,5 +1,6 @@
 package de.ole101.lodestone.sign
 
+import de.ole101.lodestone.LodestoneDsl
 import de.ole101.lodestone.event.listenOnce
 import net.kyori.adventure.nbt.CompoundBinaryTag
 import net.kyori.adventure.nbt.ListBinaryTag
@@ -26,10 +27,7 @@ import net.minestom.server.utils.block.BlockUtils
  */
 public fun signInput(block: SignInputBuilder.() -> Unit): SignInput = SignInputBuilder().apply(block).build()
 
-@DslMarker
-public annotation class SignInputDsl
-
-@SignInputDsl
+@LodestoneDsl
 public class SignInputBuilder internal constructor() {
     /**
      * The four lines shown on the sign. By default, the first two lines are empty for input and the rest is a hint.

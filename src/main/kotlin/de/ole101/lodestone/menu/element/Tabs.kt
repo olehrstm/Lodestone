@@ -1,6 +1,6 @@
 package de.ole101.lodestone.menu.element
 
-import de.ole101.lodestone.menu.MenuDsl
+import de.ole101.lodestone.LodestoneDsl
 import de.ole101.lodestone.menu.MenuScope
 import de.ole101.lodestone.menu.layout.MenuType
 import de.ole101.lodestone.menu.layout.cell
@@ -47,7 +47,7 @@ public class Tabs<K> internal constructor(
     public var active: K by active
 }
 
-@MenuDsl
+@LodestoneDsl
 public class TabsScope<K> internal constructor(
     private val type: MenuType,
 ) {

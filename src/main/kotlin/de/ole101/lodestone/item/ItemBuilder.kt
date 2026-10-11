@@ -1,5 +1,6 @@
 package de.ole101.lodestone.item
 
+import de.ole101.lodestone.LodestoneDsl
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextDecoration
 import net.minestom.server.component.DataComponent
@@ -20,10 +21,7 @@ public fun <B : ItemBuilder> item(
     block: B.() -> Unit,
 ): ItemStack = builder.apply(block).build()
 
-@DslMarker
-public annotation class ItemDsl
-
-@ItemDsl
+@LodestoneDsl
 public open class ItemBuilder(
     material: Material,
 ) {

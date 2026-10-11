@@ -1,5 +1,6 @@
 package de.ole101.lodestone.menu
 
+import de.ole101.lodestone.LodestoneDsl
 import de.ole101.lodestone.menu.render.MenuElement
 import de.ole101.lodestone.menu.render.Region
 import de.ole101.lodestone.menu.render.RenderScope
@@ -31,7 +32,7 @@ import kotlin.time.Duration
  *
  * All callbacks run on the tick thread. Exceptions thrown by effects, elements and hooks go to the exception manager.
  */
-@MenuDsl
+@LodestoneDsl
 public class MenuScope internal constructor(
     public val session: MenuSession,
     private val reactive: ReactiveScope,
