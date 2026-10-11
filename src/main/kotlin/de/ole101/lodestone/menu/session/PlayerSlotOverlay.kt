@@ -13,7 +13,7 @@ import net.minestom.server.utils.inventory.PlayerInventoryUtils
 internal class PlayerSlotOverlay(
     private val session: MenuSession,
 ) {
-    fun isShownTo(player: Player): Boolean = player.getTag(OWNER) === session
+    fun isShownTo(player: Player): Boolean = player.inventory.getTag(OWNER) === session
 
     /**
      * Returns the window items that show [player] their inventory with this menu's player slots on top.
@@ -37,7 +37,7 @@ internal class PlayerSlotOverlay(
     fun show(player: Player) {
         if (session.frame.playerSlots.isEmpty()) return restore(player)
 
-        player.setTag(OWNER, session)
+        player.inventory.setTag(OWNER, session)
         player.sendPacket(WindowItemsPacket(0, 0, windowItems(player), player.inventory.cursorItem))
     }
 
@@ -57,13 +57,15 @@ internal class PlayerSlotOverlay(
     fun restore(player: Player) {
         if (!isShownTo(player)) return
 
-        player.removeTag(OWNER)
+        player.inventory.removeTag(OWNER)
         if (player.isOnline) player.inventory.update()
     }
 
     companion object {
-        // The session whose player slots a player's client shows instead of their own items
+        // The session whose player slots a player's client shows instead of the items of this player inventory
         private val OWNER: Tag<MenuSession> = Tag.Transient("lodestone:menu-player-slots")
+
+        fun ownerOf(inventory: PlayerInventory): MenuSession? = inventory.getTag(OWNER)
 
         fun indexOf(inventorySlot: Int): Int? = when (inventorySlot) {
             in PlayerInventoryLayout.COLUMNS..PlayerInventoryLayout.LAST_SLOT -> {

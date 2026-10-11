@@ -1,7 +1,6 @@
 package de.ole101.lodestone.menu
 
 import de.ole101.lodestone.coroutine.tickScope
-import de.ole101.lodestone.event.eventNode
 import de.ole101.lodestone.event.listen
 import de.ole101.lodestone.globalEventHandler
 import de.ole101.lodestone.menu.layout.MenuType
@@ -10,6 +9,7 @@ import de.ole101.lodestone.menu.render.Region
 import de.ole101.lodestone.menu.session.AnvilField
 import de.ole101.lodestone.menu.session.ClickHandler
 import de.ole101.lodestone.menu.session.InputSlots
+import de.ole101.lodestone.menu.session.MenuEvents
 import de.ole101.lodestone.menu.session.MenuHooks
 import de.ole101.lodestone.menu.session.Navigation
 import de.ole101.lodestone.menu.session.PlayerSlotOverlay
@@ -26,9 +26,7 @@ import net.minestom.server.event.inventory.InventoryCloseEvent
 import net.minestom.server.event.inventory.InventoryItemChangeEvent
 import net.minestom.server.event.inventory.InventoryPreClickEvent
 import net.minestom.server.event.player.PlayerAnvilInputEvent
-import net.minestom.server.event.player.PlayerDisconnectEvent
 import net.minestom.server.inventory.Inventory
-import net.minestom.server.inventory.PlayerInventory
 import net.minestom.server.item.ItemStack
 import net.minestom.server.timer.TaskSchedule
 
@@ -49,7 +47,6 @@ public class MenuSession internal constructor(
     private val coroutineScope = tickScope()
     private val reactive = ReactiveScope()
     private val root = Region()
-    private val node = eventNode("lodestone:menu")
     private val task = schedulerManager.buildTask(::tick).repeat(TaskSchedule.nextTick()).schedule()
     private var dirty = false
     private var applying = false
@@ -87,14 +84,12 @@ public class MenuSession internal constructor(
         get() = anvil?.text.orEmpty()
 
     init {
-        listen<InventoryPreClickEvent>(node, clicks::handle)
-        listen<InventoryCloseEvent>(node) { event ->
-            if (event.inventory !== inventory) return@listen
-            removeViewer(event.player, closeReason(event))
-        }
-        listen<InventoryItemChangeEvent>(node, ::handleChange)
-        listen<PlayerDisconnectEvent>(node) { event -> inputSlots.returnItemsOf(event.player) }
-        listen<PlayerAnvilInputEvent>(node) { event -> anvil?.handleInput(event) }
+        val inventoryNode = inventory.eventNode()
+        listen<InventoryPreClickEvent>(inventoryNode, clicks::handleMenuClick)
+        listen<InventoryCloseEvent>(inventoryNode) { event -> removeViewer(event.player, closeReason(event)) }
+        listen<InventoryItemChangeEvent>(inventoryNode) { event -> if (!applying) handleChange(event) }
+        listen<PlayerAnvilInputEvent>(inventoryNode) { event -> anvil?.handleInput(event) }
+        MenuEvents.register(this)
         reactive.afterFlush(::commit)
 
         try {
@@ -226,7 +221,8 @@ public class MenuSession internal constructor(
         task.cancel()
         coroutineScope.cancel()
         reactive.dispose()
-        globalEventHandler.removeChild(node)
+        MenuEvents.unregister(this)
+        globalEventHandler.unmap(inventory)
     }
 
     internal fun markDirty() {
@@ -313,13 +309,6 @@ public class MenuSession internal constructor(
     }
 
     private fun handleChange(event: InventoryItemChangeEvent) {
-        when {
-            event.inventory is PlayerInventory -> playerOverlay.showAgainAfterChange(event.inventory)
-            event.inventory === inventory && !applying -> handleMenuChange(event)
-        }
-    }
-
-    private fun handleMenuChange(event: InventoryItemChangeEvent) {
         if (event.newItem.isAir) inputSlots.forget(event.slot)
         markContentsChanged()
         frame.slots[event.slot]?.onChange?.invoke(event.previousItem, event.newItem)

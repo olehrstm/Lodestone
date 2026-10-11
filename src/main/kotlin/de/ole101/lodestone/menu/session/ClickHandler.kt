@@ -23,18 +23,8 @@ internal class ClickHandler(
     private val hooks
         get() = session.hooks
 
-    fun handle(event: InventoryPreClickEvent) {
-        val player = event.player
-        // Minestom sends the real items again after a click, so the player slots are shown again
-        if (session.playerOverlay.isShownTo(player)) session.playerOverlay.showAtTickEnd(player)
-
-        when {
-            event.inventory === inventory -> handleMenuClick(event)
-            player.openInventory === inventory -> handlePlayerInventoryClick(event)
-        }
-    }
-
-    private fun handleMenuClick(event: InventoryPreClickEvent) {
+    fun handleMenuClick(event: InventoryPreClickEvent) {
+        showPlayerSlotsAgain(event.player)
         if (!cooldown.tryAcceptClick(event.player)) {
             event.isCancelled = true
             return
@@ -83,7 +73,8 @@ internal class ClickHandler(
         if (!context.isCancelled && view.isInput) session.inputSlots.claim(slot, player)
     }
 
-    private fun handlePlayerInventoryClick(event: InventoryPreClickEvent) {
+    fun handlePlayerInventoryClick(event: InventoryPreClickEvent) {
+        showPlayerSlotsAgain(event.player)
         val click = event.click
         // The client reports clicks outside the GUI as dropping the cursor, also when the cursor is empty
         if (click is Click.DropCursor) return handleOutsideClick(event, click)
@@ -129,6 +120,11 @@ internal class ClickHandler(
         // Minestom would fill any menu slot, so only input slots are filled here
         if (isShiftClick && !context.isCancelled) session.inputSlots.moveInto(player, click.slot())
         event.isCancelled = context.isCancelled || isShiftClick
+    }
+
+    // Minestom sends the real items again after a click, so the player slots are shown again
+    private fun showPlayerSlotsAgain(player: Player) {
+        if (session.playerOverlay.isShownTo(player)) session.playerOverlay.showAtTickEnd(player)
     }
 
     private fun swappedItem(

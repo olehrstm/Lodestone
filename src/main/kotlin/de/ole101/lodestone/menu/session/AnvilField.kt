@@ -43,8 +43,7 @@ internal class AnvilField(
         }
     }
 
-    private fun isInputForThisAnvil(event: PlayerAnvilInputEvent): Boolean = event.inventory === session.inventory &&
-        event.player in session.currentViewers
+    private fun isInputForThisAnvil(event: PlayerAnvilInputEvent): Boolean = event.player in session.currentViewers
 }
 
 private val PRINTABLE_ASCII = ' '..'~'
