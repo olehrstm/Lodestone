@@ -35,14 +35,12 @@ internal class GuiLayout(
         fun chest(rows: Int) = GuiLayout(
             titleX = MenuMetrics.TITLE_X,
             height = CHEST_BASE_HEIGHT + rows * MenuMetrics.SLOT_SIZE,
-            slotXs = IntArray(CHEST_COLUMNS, MenuMetrics::cellX),
+            slotXs = IntArray(GRID_COLUMNS, MenuMetrics::cellX),
             slotTop = MenuMetrics.SLOT_ORIGIN_Y,
             playerInventoryTop = rows * MenuMetrics.SLOT_SIZE + CHEST_PLAYER_INVENTORY_OFFSET,
         )
     }
 }
-
-private const val CHEST_COLUMNS = 9
 
 // The chest GUI is this high without its slot rows, and its player inventory starts this far below them
 private const val CHEST_BASE_HEIGHT = 114

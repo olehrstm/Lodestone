@@ -12,12 +12,12 @@ public enum class MenuType(
     internal val inventoryType: InventoryType,
     internal val gui: GuiLayout = GuiLayout.chest(rows),
 ) {
-    CHEST_1(9, 1, InventoryType.CHEST_1_ROW),
-    CHEST_2(9, 2, InventoryType.CHEST_2_ROW),
-    CHEST_3(9, 3, InventoryType.CHEST_3_ROW),
-    CHEST_4(9, 4, InventoryType.CHEST_4_ROW),
-    CHEST_5(9, 5, InventoryType.CHEST_5_ROW),
-    CHEST_6(9, 6, InventoryType.CHEST_6_ROW),
+    CHEST_1(GRID_COLUMNS, 1, InventoryType.CHEST_1_ROW),
+    CHEST_2(GRID_COLUMNS, 2, InventoryType.CHEST_2_ROW),
+    CHEST_3(GRID_COLUMNS, 3, InventoryType.CHEST_3_ROW),
+    CHEST_4(GRID_COLUMNS, 4, InventoryType.CHEST_4_ROW),
+    CHEST_5(GRID_COLUMNS, 5, InventoryType.CHEST_5_ROW),
+    CHEST_6(GRID_COLUMNS, 6, InventoryType.CHEST_6_ROW),
 
     /**
      * An anvil with its two input slots and the result slot as one row.
@@ -55,3 +55,8 @@ public enum class MenuType(
         }
     }
 }
+
+/**
+ * The number of columns of chests and the player inventory.
+ */
+internal const val GRID_COLUMNS = 9

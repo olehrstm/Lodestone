@@ -84,17 +84,17 @@ public fun playerCell(
     return Position.PlayerCell(columns, row)
 }
 
-private const val MAX_COLUMNS = 9
-
-internal fun requireColumns(columns: IntRange) = require(!columns.isEmpty() && columns.first >= 0 && columns.last < MAX_COLUMNS) {
-    "Columns must be a non-empty range within 0..8, but were $columns"
+internal fun requireColumns(columns: IntRange) = require(!columns.isEmpty() && columns.first >= 0 && columns.last < GRID_COLUMNS) {
+    "Columns must be a non-empty range within 0..${GRID_COLUMNS - 1}, but were $columns"
 }
 
 internal fun requirePlayerSlot(
     column: Int,
     row: Int,
 ) {
-    require(column in 0 until PlayerInventoryLayout.COLUMNS) { "Player inventory column must be within 0..8, but was $column" }
+    require(column in 0 until PlayerInventoryLayout.COLUMNS) {
+        "Player inventory column must be within 0..${GRID_COLUMNS - 1}, but was $column"
+    }
     requirePlayerRow(row)
 }
 

@@ -2,6 +2,8 @@ package de.ole101.lodestone.menu.layout
 
 /**
  * Pixel measurements of the chest menu GUI, in GUI pixels from the top-left corner of the menu.
+ *
+ * The values only hold for chest menus. Other types such as [MenuType.ANVIL] place their slots and title elsewhere.
  */
 public object MenuMetrics {
     public const val GUI_WIDTH: Int = 176
