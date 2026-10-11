@@ -12,7 +12,6 @@ import de.ole101.lodestone.testing.fakePlayer
 import de.ole101.lodestone.text.glyph.Glyph
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.ints.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
@@ -37,7 +36,8 @@ class AnvilInputTest :
             val session = anvilInput("initial") { onConfirm { _, text -> confirmed += text } }.open(player)
             val inventory = session.inventory
             session[0].get(DataComponents.CUSTOM_NAME) shouldBe Component.text("initial")
-            session[0].get(DataComponents.REPAIR_COST)!! shouldBeLessThan 0
+            session[0].get(DataComponents.REPAIR_COST) shouldBe 0
+            session[1].get(DataComponents.ITEM_MODEL) shouldBe "minecraft:air"
             val level = player.level
             EventDispatcher.call(PlayerAnvilInputEvent(player, inventory, "latest"))
             val click = InventoryPreClickEvent(inventory, player, Click.Left(2))
