@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/olehrstm/Lodestone/compare/v1.1.0...v2.0.0) (2026-10-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* **menu:** add reactive chest menu api ([#33](https://github.com/olehrstm/Lodestone/issues/33))
+
+### Features
+
+* **menu:** add reactive chest menu api ([#33](https://github.com/olehrstm/Lodestone/issues/33)) ([c07de67](https://github.com/olehrstm/Lodestone/commit/c07de67bfcb970336517920f3503a297708f3a14))
+
 ## [1.1.0](https://github.com/olehrstm/Lodestone/compare/v1.0.0...v1.1.0) (2026-09-27)
 
 
