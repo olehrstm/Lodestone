@@ -1,6 +1,7 @@
 package de.ole101.lodestone.text
 
 import net.kyori.adventure.text.format.TextColor
+import java.util.Collections
 import kotlin.properties.PropertyDelegateProvider
 import kotlin.properties.ReadOnlyProperty
 
@@ -11,13 +12,14 @@ import kotlin.properties.ReadOnlyProperty
  * them as `<!name>` tags through [LodestoneTags].
  */
 public object Colors {
+    private val colors = LinkedHashMap<String, TextColor>()
+
     /**
      * All colors keyed by their lowercase CSS name without separators, such as `aliceblue`.
      *
      * Gray and grey spellings are separate keys with the same color.
      */
-    public val byName: Map<String, TextColor>
-        field = LinkedHashMap<String, TextColor>()
+    public val byName: Map<String, TextColor> = Collections.unmodifiableMap(colors)
 
     public val ALICE_BLUE: TextColor by color(0xF0F8FF)
     public val ANTIQUE_WHITE: TextColor by color(0xFAEBD7)
@@ -178,7 +180,7 @@ public object Colors {
 
     private fun color(value: Int) = PropertyDelegateProvider<Any?, ReadOnlyProperty<Any?, TextColor>> { _, property ->
         val color = TextColor.color(value)
-        byName[property.name.replace("_", "").lowercase()] = color
+        colors[property.name.replace("_", "").lowercase()] = color
         ReadOnlyProperty { _, _ -> color }
     }
 }
