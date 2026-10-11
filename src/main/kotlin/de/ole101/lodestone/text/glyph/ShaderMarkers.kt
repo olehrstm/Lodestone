@@ -30,3 +30,33 @@ internal fun buildRelativeShadowMarker(
         rgb332
     return ShadowColor.shadowColor(argb)
 }
+
+private const val HOVER_COORDINATE_OFFSET = 128
+private const val HOVER_COORDINATE_MAX = 255
+private const val HOVER_WIDTH_MAX = 2047
+
+/**
+ * Encodes a hover sprite for the GUI text shader, drawn [dx] and [dy] pixels from the screen center while a tooltip
+ * of [tooltipWidth] pixels and [lines] lines is shown.
+ *
+ * Red and green are the offsets plus 128, blue and the top 3 bits of alpha are the tooltip width, clamped to
+ * `0..2047`, and the low 5 bits of alpha are the number of lines. The shader draws the shadow at the target and cuts
+ * out the part behind the tooltip.
+ *
+ * @throws IllegalArgumentException if [dx] or [dy] is outside `-128..127`.
+ */
+internal fun buildHoverShadow(
+    dx: Int,
+    dy: Int,
+    tooltipWidth: Int,
+    lines: Int,
+): ShadowColor {
+    val red = dx + HOVER_COORDINATE_OFFSET
+    val green = dy + HOVER_COORDINATE_OFFSET
+    require(red in 0..HOVER_COORDINATE_MAX && green in 0..HOVER_COORDINATE_MAX) {
+        "Hover sprites must start within 128 pixels of the screen center, but were at $dx, $dy"
+    }
+
+    val width = tooltipWidth.coerceIn(0, HOVER_WIDTH_MAX)
+    return ShadowColor.shadowColor(red, green, width and 0xFF, (width shr 8 shl 5) or lines)
+}
