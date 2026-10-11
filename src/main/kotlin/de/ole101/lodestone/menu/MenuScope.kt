@@ -12,7 +12,6 @@ import de.ole101.lodestone.reactive.node.EffectScope
 import de.ole101.lodestone.reactive.node.State
 import de.ole101.lodestone.reactive.node.StateImpl
 import de.ole101.lodestone.reactive.node.untracked
-import de.ole101.lodestone.text.glyph.TextAlign
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -20,7 +19,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
-import net.kyori.adventure.text.Component
 import net.minestom.server.entity.Player
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
