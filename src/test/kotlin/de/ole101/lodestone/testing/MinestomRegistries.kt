@@ -8,7 +8,6 @@ import net.minestom.server.registry.Registries
  * registries once is enough since the binding it performs is global.
  */
 internal object MinestomRegistries {
-
     private val vanilla by lazy { Registries.vanilla() }
 
     fun bind() {

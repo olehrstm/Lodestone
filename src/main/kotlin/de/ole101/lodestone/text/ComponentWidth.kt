@@ -14,59 +14,58 @@ import net.kyori.adventure.text.format.TextDecoration
  * Bold characters, including spaces, are one pixel wider.
  * Bold is inherited from parent components. Only text content is measured: translatable, keybind
  * and other non-text components count as zero width, but their children are still measured.
- * The exception is a translatable component with the key `space.<n>` from [de.ole101.lodestone.text.glyph.space], which counts as `n` pixels.
+ * The exception is a translatable component with the key `space.<n>` from [de.ole101.lodestone.text.glyph.space],
+ * which counts as `n` pixels.
  * Known glyph widths cover ASCII, additional font symbols, ellipses and the small caps glyphs from `<small>`.
  * Unlisted characters are assumed to be 5 pixels wide before spacing and bold are added.
  */
 public fun Component.pixelWidth(): Int = pixelWidth(this, parentBold = false)
 
-private fun pixelWidth(component: Component, parentBold: Boolean): Int {
-    val bold = when (component.decoration(TextDecoration.BOLD)) {
-        TextDecoration.State.TRUE -> true
-        TextDecoration.State.FALSE -> false
-        TextDecoration.State.NOT_SET -> parentBold
-    }
-    val space = (component as? TranslatableComponent)?.key()
-        ?.takeIf { it.startsWith(SPACE_KEY_PREFIX) }
-        ?.substring(SPACE_KEY_PREFIX.length)?.toIntOrNull() ?: 0
+private fun pixelWidth(
+    component: Component,
+    parentBold: Boolean,
+): Int {
+    val bold = component.decoration(TextDecoration.BOLD).toBoolean(parentBold)
     val text = (component as? TextComponent)?.content().orEmpty()
-    val boldWidth = if (bold) 1 else 0
-    val ownWidth = text.codePoints().map {
-        val spacing = if (it == ' '.code) 0 else CHARACTER_SPACING
-        (GLYPH_WIDTHS[it] ?: DEFAULT_GLYPH_WIDTH) + spacing + boldWidth
-    }.sum()
+    val ownWidth = text.codePoints().map { glyphWidth(it, bold) }.sum()
 
-    return space + ownWidth + component.children().sumOf { pixelWidth(it, bold) }
+    return spaceWidth(component) + ownWidth + component.children().sumOf { pixelWidth(it, bold) }
 }
+
+private fun TextDecoration.State.toBoolean(default: Boolean): Boolean = when (this) {
+    TextDecoration.State.TRUE -> true
+    TextDecoration.State.FALSE -> false
+    TextDecoration.State.NOT_SET -> default
+}
+
+private fun glyphWidth(
+    codePoint: Int,
+    bold: Boolean,
+): Int {
+    val spacing = if (codePoint == ' '.code) 0 else CHARACTER_SPACING
+    return (GLYPH_WIDTHS[codePoint] ?: DEFAULT_GLYPH_WIDTH) + spacing + if (bold) 1 else 0
+}
+
+private fun spaceWidth(component: Component): Int = (component as? TranslatableComponent)
+    ?.key()
+    ?.removePrefix(SPACE_KEY_PREFIX)
+    ?.toIntOrNull() ?: 0
 
 private const val CHARACTER_SPACING = 1
 private const val DEFAULT_GLYPH_WIDTH = 5
 
-private val GLYPH_WIDTHS: Map<Int, Int> = mapOf(
-    ' ' to 4, '!' to 1, '"' to 3, '#' to 5, '$' to 5, '%' to 5, '&' to 5, '\'' to 1,
-    '(' to 3, ')' to 3, '*' to 3, '+' to 5, ',' to 1, '-' to 5, '.' to 1, '/' to 5,
-    '0' to 5, '1' to 5, '2' to 5, '3' to 5, '4' to 5, '5' to 5, '6' to 5, '7' to 5,
-    '8' to 5, '9' to 5, ':' to 1, ';' to 1, '<' to 4, '=' to 5, '>' to 4, '?' to 5,
-    '@' to 6, 'A' to 5, 'B' to 5, 'C' to 5, 'D' to 5, 'E' to 5, 'F' to 5, 'G' to 5,
-    'H' to 5, 'I' to 3, 'J' to 5, 'K' to 5, 'L' to 5, 'M' to 5, 'N' to 5, 'O' to 5,
-    'P' to 5, 'Q' to 5, 'R' to 5, 'S' to 5, 'T' to 5, 'U' to 5, 'V' to 5, 'W' to 5,
-    'X' to 5, 'Y' to 5, 'Z' to 5, '[' to 3, '\\' to 5, ']' to 3, '^' to 5, '_' to 5,
-    '`' to 2, 'a' to 5, 'b' to 5, 'c' to 5, 'd' to 5, 'e' to 5, 'f' to 4, 'g' to 5,
-    'h' to 5, 'i' to 1, 'j' to 5, 'k' to 4, 'l' to 2, 'm' to 5, 'n' to 5, 'o' to 5,
-    'p' to 5, 'q' to 5, 'r' to 5, 's' to 5, 't' to 3, 'u' to 5, 'v' to 5, 'w' to 5,
-    'x' to 5, 'y' to 5, 'z' to 5, '{' to 3, '|' to 1, '}' to 3, '~' to 6, '£' to 5,
-    'ƒ' to 5, 'ª' to 4, 'º' to 4, '¬' to 5, '«' to 6, '»' to 6,
-    '░' to 7, '▒' to 8, '▓' to 8, '│' to 5, '┤' to 5, '╡' to 5, '╢' to 7,
-    '╖' to 7, '╕' to 5, '╣' to 7, '║' to 7, '╗' to 7, '╝' to 7, '╜' to 7,
-    '╛' to 5, '┐' to 5, '└' to 8, '┴' to 8, '┬' to 8, '├' to 8, '─' to 8,
-    '┼' to 8, '╞' to 8, '╟' to 8, '╚' to 8, '╔' to 8, '╩' to 8, '╦' to 8,
-    '╠' to 8, '═' to 8, '╬' to 8, '╧' to 8, '╨' to 8, '╤' to 8, '╥' to 8,
-    '╙' to 8, '╘' to 8, '╒' to 8, '╓' to 8, '╫' to 8, '╪' to 8, '┘' to 5,
-    '┌' to 8, '█' to 8, '▄' to 8, '▌' to 4, '▐' to 8, '▀' to 8, '∅' to 7,
-    '∈' to 5, '≡' to 6, '±' to 5, '≥' to 5, '≤' to 5, '⌠' to 7, '⌡' to 4,
-    '÷' to 5, '≈' to 6, '°' to 4, '∙' to 5, '√' to 6, 'ⁿ' to 4, '²' to 4, '■' to 5,
-    '…' to 8,
-    'ᴀ' to 5, 'ʙ' to 5, 'ᴄ' to 5, 'ᴅ' to 5, 'ᴇ' to 5, 'ғ' to 5, 'ɢ' to 5, 'ʜ' to 5,
-    'ɪ' to 3, 'ᴊ' to 5, 'ᴋ' to 5, 'ʟ' to 5, 'ᴍ' to 5, 'ɴ' to 5, 'ᴏ' to 5, 'ᴘ' to 5,
-    'ǫ' to 5, 'ʀ' to 5, 'ᴛ' to 5, 'ᴜ' to 5, 'ᴠ' to 5, 'ᴡ' to 5, 'ʏ' to 5, 'ᴢ' to 5,
-).mapKeys { it.key.code }
+private val GLYPH_WIDTHS: Map<Int, Int> = buildMap {
+    fun widths(
+        width: Int,
+        chars: String,
+    ) = chars.codePoints().forEach { put(it, width) }
+
+    widths(1, "!',.:;i|")
+    widths(2, "`l")
+    widths(3, "\"()*I[]t{}ɪ")
+    widths(4, " <>fkªº▌⌡°ⁿ²")
+    widths(5, "#$%&+-/0123456789=?ABCDEFGHIJKLMNOPQRSTUVWXYZ\\^_abcdeghjmnopqrsuvwxyz£ƒ¬│┤╡╕╛┐┘∈±≥≤÷∙■ᴀʙᴄᴅᴇғɢʜᴊᴋʟᴍɴᴏᴘǫʀᴛᴜᴠᴡʏᴢ")
+    widths(6, "@~«»≡≈√")
+    widths(7, "░╢╖╣║╗╝╜⌠∅")
+    widths(8, "▒▓└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┌█▄▐▀…")
+}

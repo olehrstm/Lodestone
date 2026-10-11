@@ -1,7 +1,12 @@
 package de.ole101.lodestone.coroutine
 
 import de.ole101.lodestone.event.listen
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import net.minestom.server.entity.Entity
 import net.minestom.server.event.entity.EntityDespawnEvent
@@ -9,7 +14,7 @@ import net.minestom.server.tag.Tag
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-private val scopeTag = Tag.Transient<CoroutineScope>("lodestone:coroutine_scope")
+private val SCOPE_TAG = Tag.Transient<CoroutineScope>("lodestone:coroutine_scope")
 
 /**
  * The coroutine scope of this entity, created on first access and shared by every later call. It resumes
@@ -25,7 +30,7 @@ private val scopeTag = Tag.Transient<CoroutineScope>("lodestone:coroutine_scope"
  * @see tickScope
  */
 public val Entity.coroutineScope: CoroutineScope
-    get() = getTag(scopeTag) ?: updateAndGetTag(scopeTag) { it ?: newScope() }
+    get() = getTag(SCOPE_TAG) ?: updateAndGetTag(SCOPE_TAG) { it ?: newScope() }
 
 /**
  * Launches [block] in this entity's [coroutineScope] and returns its job. [context] and [start] work
@@ -42,6 +47,7 @@ private fun Entity.newScope(): CoroutineScope {
 
     listen<EntityDespawnEvent>(eventNode()) {
         scope.cancel()
+        removeTag(SCOPE_TAG)
     }
 
     if (isRemoved) scope.cancel()
