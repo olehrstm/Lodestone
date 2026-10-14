@@ -5,7 +5,7 @@ kotlinx-coroutines = "1.11.0"
 minestom = "2026.10.07-26.2"
 adventure-text-minimessage = "5.2.0"
 
-kotest = "6.2.5"
+kotest = "6.2.6"
 
 spotless = "8.10.4"
 detekt = "2.0.0-alpha.6"
